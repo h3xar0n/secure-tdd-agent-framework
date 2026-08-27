@@ -1,6 +1,6 @@
-# Secure Test-Driven Development (Secure TDD) Agent Framework
+# Secure TDD Agent Framework
 
-> **A test-driven development and quality assurance framework with integrated security for AI coding agents and developers.** Combines functional test-first engineering, living STRIDE threat modeling, local code quality checks, and continuous skill self-evolution to mitigate recurring issues.
+> **A TDD and QA framework with integrated security for AI coding agents and developers.** Combines functional test-first engineering, living STRIDE threat modeling, local code quality checks, and continuous skill self-evolution to mitigate recurring issues.
 
 ---
 
@@ -22,13 +22,13 @@ When security and QA reviews happen **only** downstream in CI/CD or post-merge p
 **Security is an intrinsic part of software quality.** Treating security separately from functional development introduces direct risks to system stability:
 
 - **Isolated Security Threatens Stability**: When security is treated in isolation from functional development, it actively poses a risk to system stability. Out-of-band security scans, external remediation workflows, or isolated security patches frequently introduce regressions, break existing API contracts, and cause unexpected production outages because they modify code without context of the application's functional requirements.
-- **Co-Verification via TDD**: Security patches that break functional behavior introduce regressions into production. Unifying security constraints with Test-Driven Development (TDD) codifies defensive boundaries (authentication, input allow-lists, parameterized sinks) into tests alongside functional acceptance criteria (happy paths, business workflows). This supports preserving both security and operational stability.
+- **Co-Verification via TDD**: Security patches that break functional behavior introduce regressions into production. Unifying security constraints with TDD codifies defensive boundaries (authentication, input allow-lists, parameterized sinks) into tests alongside functional acceptance criteria (happy paths, business workflows). This supports preserving both security and operational stability.
 
 **The Inner-Loop Advantage**: Moving threat modeling and security test assertions into the developer's local test-first loop (TDD) eliminates issues in seconds while code is actively being written.
 
 ```
        +------------------------------------------------------------------+
-       |                  HOLISTIC QUALITY ASSURANCE (QA)                 |
+       |                           HOLISTIC QA                            |
        |                                                                  |
        |   +--------------------------+    +--------------------------+   |
        |   |      FUNCTIONAL QA       |    |       SECURITY QA        |   |
@@ -59,7 +59,7 @@ When security and QA reviews happen **only** downstream in CI/CD or post-merge p
 ## 2. Inspiration, CI/CD Balance & Scaling Philosophy
 
 This framework brings together two inspirations:
-1. **Test-Driven Development & Continuous Verification**: Drawing on the engineering discipline of TDD and Paul Hammond's pioneering work where rapid feedback loops, high verification confidence, and test-first design enable developers to ship reliably and move fast.
+1. **TDD & Continuous Verification**: Drawing on the engineering discipline of TDD and Paul Hammond's pioneering work where rapid feedback loops, high verification confidence, and test-first design enable developers to ship reliably and move fast.
 2. **Modular Agent Skill Architectures**: Inspired by research into agentic reasoning and specialized skill structures, including [Google's Mantis project](https://github.com/google/mantis).
 
 ### Standalone Security Agents vs. Inner-Loop Development
@@ -225,7 +225,7 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
 ```
 
 > **TDD Principles & Continuous Evolution in Hook Remediation**:
-> Every automated fix follows the Test-Driven Development (TDD) cycle rather than applying isolated code patches:
+> Every automated fix follows the TDD cycle rather than applying isolated code patches:
 > 1. **Add Boundary Test First (RED)**: A test case reproducing the finding or boundary constraint is added to the test suite and confirmed failing.
 > 2. **Apply Minimal Fix (GREEN)**: The defensive code change is applied to satisfy the failing test.
 > 3. **Full Suite Regression Verification**: The complete test suite is executed across all existing unit and integration tests to confirm that existing functionality is preserved and regressions are caught early.

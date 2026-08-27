@@ -326,9 +326,9 @@ Applying automated security patches directly to legacy repositories with sparse 
 
 - **Expanded LLM Engines**: Multi-model routing supporting OpenAI Codex and diverse inference backends for skill execution.
 - **Wiz Code Integration**: Adding Wiz Code as an alternative Stage 1 deterministic scanning engine alongside open-source Semgrep.
-- **Language-Specific Skill Packs**: Dedicated defensive skills and test writers for Go, TypeScript/Node.js, Rust, and Java/Spring.
+- **Language-Specific Skill Packs**: Dedicated defensive skills and test writers for Go, Python, TypeScript/Node.js, Rust, and Java/Spring.
 - **Infrastructure as Code (IaC) Verification**: Extending test-first security to Terraform and OpenTofu modules, asserting IAM least privilege, network egress boundaries, and resource policies through local policy-as-code tests.
-- **Google Cloud Skill Modules**: Pre-packaged skills for Cloud Run, Cloud KMS, Workload Identity Federation, and Secret Manager safe integration patterns.
+- **Google Cloud Skill Modules**: Using Google's pre-packaged skills for Cloud Run, Cloud KMS, Workload Identity Federation, and Secret Manager safe integration patterns.
 
 ---
 
@@ -376,6 +376,6 @@ bash ../secure-tdd-claude-code/.claude/hooks/tests/run_tests.sh
 
 ---
 
-## 7. License
+## 9. License
 
 Licensed under the [Apache License, Version 2.0](LICENSE).

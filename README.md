@@ -45,7 +45,7 @@ Similarly, AI coding agents without structured QA guidance frequently write unve
 ## 2. Inspiration & Extensible Design Philosophy
 
 This framework brings together two foundational inspirations:
-1. **Test-Driven Development & Continuous Verification**: Drawing on the engineering discipline of TDD and **Paul Hammond's** pioneering work on automated testing and continuous deployment (where rapid feedback loops, high verification confidence, and test-first design enable developers to ship reliably and move fast).
+1. **Test-Driven Development & Continuous Verification**: Drawing on the engineering discipline of TDD and Paul Hammond's pioneering work where rapid feedback loops, high verification confidence, and test-first design enable developers to ship reliably and move fast.
 2. **Modular Agent Skill Architectures**: Inspired by research into agentic reasoning and specialized skill structures, including [Google's Mantis project](https://github.com/google/mantis).
 
 While dedicated security review tools often focus on deep offline batch audits and exploit reproduction across legacy repositories, **developers need a lightweight, modular system that integrates directly into everyday feature development and QA workflows**.

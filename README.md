@@ -201,24 +201,24 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
     SECURITY_GATE_ALLOW_ON_ERROR               (Apply Patch & Run Tests)
             │                                             │
      ┌──────┴──────┐                       ┌──────────────┴──────────────┐
-  (false)        (true)                (Passes in                    (Fails Tests
-     │             │                 <= 3 Attempts)                Past 3rd Attempt)
-     ▼             ▼                       │                              │
-[ Deny Push  ] [ Tag Commit with           ▼                              ▼
-[& Escalate  ]   'unverified-scan' ] [ Auto-Commit ]              [ Revert Changes ]
-               [ Allow Push        ] [ Allow Push  ]              [ git checkout . ]
-                                                                          │
-                                                                          ▼
-                                                                 [ Run 'cm verify' ]
-                                                                          │
-                                                     ┌────────────────────┴────────────────────┐
-                                            (Conclusively Not                     (Confirms Issue OR
-                                               Exploitable)                         Verify Crashes)
-                                                     │                                     │
-                                                     ▼                                     ▼
-                                           [ Append Advisory to ]                 [ Escalate to HITL ]
-                                           [ Commit / Audit Log ]                 - Non-TTY: Deny Push
-                                           [    Allow Push      ]
+  (false)        (true)               (Fails Tests                  (Passes in
+     │             │                Past 3rd Attempt)             <= 3 Attempts)
+     ▼             ▼                       │                             │
+[ Deny Push  ] [ Tag Commit with           ▼                             ▼
+[& Escalate  ]   'unverified-scan' ] [ Revert Changes ]            [ Auto-Commit ]
+               [ Allow Push        ] [ git checkout . ]            [ Allow Push  ]
+                                           │
+                                           ▼
+                                  [ Run 'cm verify' ]
+                                           │
+                      ┌────────────────────┴────────────────────┐
+             (Conclusively Not                     (Confirms Issue OR
+                Exploitable)                         Verify Crashes)
+                      │                                     │
+                      ▼                                     ▼
+            [ Append Advisory to ]                 [ Escalate to HITL ]
+            [ Commit / Audit Log ]                 - Non-TTY: Deny Push
+            [    Allow Push      ]
 ```
 
 

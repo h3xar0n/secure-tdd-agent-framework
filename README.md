@@ -40,7 +40,11 @@ Similarly, AI coding agents without structured QA guidance frequently write unve
 5. **Continuous Quality & Security Evolution**: When edge cases, bugs, or security patterns are resolved, the framework captures the lesson into `CONTEXT.md` and `SKILL.md` so the entire team and agent fleet learn permanently.
 6. **No Heavy Database Required**: All state is managed transparently via plain Markdown (`CONTEXT.md`, `threat_model.md`) and append-only logs (`.security-gate/`).
 
+> [!TIP]
+> **Living Exemplar (Dogfooded in this Repository)**: We use this exact Secure TDD workflow to update and maintain this framework itself! Readers can inspect the live [`threat_model.md`](threat_model.md) generated during Phase A (which models the framework's own pre-push hook gates and trust boundaries) and the comprehensive test coverage across [`tests/`](tests/) and [`.agents/tests/`](.agents/tests/) written test-first during Phase B as real, working examples.
+
 ---
+
 
 ## 2. Inspiration & Extensible Design Philosophy
 

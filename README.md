@@ -58,7 +58,7 @@ A core philosophical pillar of this framework is that **security is not an isola
 
 ## 2. Inspiration, CI/CD Balance & Scaling Philosophy
 
-This framework brings together two foundational inspirations:
+This framework brings together two inspirations:
 1. **Test-Driven Development & Continuous Verification**: Drawing on the engineering discipline of TDD and Paul Hammond's pioneering work where rapid feedback loops, high verification confidence, and test-first design enable developers to ship reliably and move fast.
 2. **Modular Agent Skill Architectures**: Inspired by research into agentic reasoning and specialized skill structures, including [Google's Mantis project](https://github.com/google/mantis).
 

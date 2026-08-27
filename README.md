@@ -173,44 +173,49 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
               (No changes)                   (Files changed)
                     │                             │
                     ▼                             ▼
-              [ Allow Push ]            [ Stage 1: Semgrep Scan ]
-                                        (Fast AST Rules & Autofix)
+              [ Allow Push ]       [ Stage 1: Deterministic Scan ]
+                                    (Fast AST Rules & Autofix)
                                                   │
                          ┌────────────────────────┼────────────────────────┐
                    (Scan Error)              (No Findings)           (Findings Present)
                          │                        │                        │
+                         ▼                        │                        ▼
+                 [ Check Fail-Open ]              │             [ Rank Finding Severity ]
+            SECURITY_GATE_ALLOW_ON_ERROR          │            (CRITICAL/HIGH vs LOW/INFO)
+                         │                        │                        │
+                  ┌──────┴──────┐                 │             ┌──────────┴──────────┐
+               (false)        (true)              │          (Advisory)            (Blocking)
+                  │             │                 │             │                      │
+                  ▼             ▼                 │             ▼                      ▼
+             [ Deny Push  ] [ Log ERROR ]         │      [ Log Advisory ]      [ Apply Autofix / ]
+             [& Escalate  ] [ Proceed   ]         │      [   Proceed    ]      [ Queue Finding   ]
+                                │                 │             │                      │
+                                └─────────────────┼─────────────┴──────────────────────┘
+                                                  │
+                                                  ▼
+                                      [ Stage 2: Semantic Scan ]
+                                      (Contextual AI / CodeMender)
+                                                  │
+                         ┌────────────────────────┼────────────────────────┐
+                   (Scan Error)              (No Findings)           (Blocking Findings)
+                         │                        │                        │
                          ▼                        ▼                        ▼
-                 [ Check Fail-Open ]      [ Next Engine /       [ Rank Finding Severity ]
-            SECURITY_GATE_ALLOW_ON_ERROR     Allow Push ]      (CRITICAL/HIGH vs LOW/INFO)
+                 [ Check Fail-Open ]        [ Allow Push ]       [ 3-Attempt Test Loop ]
+            SECURITY_GATE_ALLOW_ON_ERROR                         (Apply Patch & Run Tests)
                          │                                                 │
                   ┌──────┴──────┐                               ┌──────────┴──────────┐
-               (true)        (false)                       (Advisory)              (Blocking)
-                  │             │                               │                      │
-                  ▼             ▼                               ▼                      ▼
-            [ Allow Push ] [ Deny Push ]                  [ Log Advisory ]     [ Apply Autofix / ]
-                                                          [  Allow Push  ]     [ Prepare Findings ]
+               (false)        (true)                        (Passes in            (Fails Tests
+                  │             │                         <= 3 Attempts)        Past 3rd Attempt)
+                  ▼             ▼                               │                      │
+             [ Deny Push  ] [ Allow Push ]                      ▼                      ▼
+             [& Escalate  ]                               [ Auto-Commit ]       [ Revert Changes ]
+                                                          [ Allow Push  ]       [ git checkout . ]
                                                                                        │
                                                                                        ▼
-                                                                            [ Stage 2: CodeMender ]
-                                                                            (Deep Semantic Remediation)
-                                                                                       │
-                                                                                       ▼
-                                                                           [ 3-Attempt Test Loop ]
-                                                                           (Apply Patch & Run Tests)
-                                                                                       │
-                                                                        ┌──────────────┴──────────────┐
-                                                                    (Passes in                    (Fails Tests Past
-                                                                  <= 3 Attempts)                     3rd Attempt)
-                                                                        │                                 │
-                                                                        ▼                                 ▼
-                                                                 [ Auto-Commit ]                 [ Revert Changes ]
-                                                                 [ Allow Push  ]                 [ git checkout . ]
-                                                                                                          │
-                                                                                                          ▼
-                                                                                                 [ Verification Step ]
-                                                                                                 - Run 'cm verify'
-                                                                                                 - HITL Defer / Abort
-                                                                                                 - Non-TTY: Deny Push
+                                                                              [ Verification Step ]
+                                                                              - Run 'cm verify'
+                                                                              - HITL Defer / Abort
+                                                                              - Non-TTY: Deny Push
 ```
 
 

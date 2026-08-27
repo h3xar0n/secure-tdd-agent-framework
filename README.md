@@ -224,12 +224,14 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
             [    Allow Push      ]
 ```
 
-> **TDD Principles & Cross-Stage Verification in Hook Remediation**:
+> **TDD Principles & Continuous Evolution in Hook Remediation**:
 > Every automated fix follows the Test-Driven Development (TDD) cycle rather than applying isolated code patches:
 > 1. **Add Boundary Test First (RED)**: A test case reproducing the finding or boundary constraint is added to the test suite and confirmed failing.
 > 2. **Apply Minimal Fix (GREEN)**: The defensive code change is applied to satisfy the failing test.
 > 3. **Full Suite Regression Verification**: The complete test suite is executed across all existing unit and integration tests to confirm that existing functionality is preserved and regressions are caught early.
 > 4. **Cross-Stage Context Import**: Fixes applied during the Stage 1 deterministic scan are imported into Stage 2 so the contextual AI engine verifies them against semantic constraints. If a Stage 1 fix cannot pass tests within 3 attempts, the unresolved finding is imported directly into Stage 2 for multi-file contextual remediation.
+> 5. **Detailed Commit Documentation**: Auto-commits include structured commit bodies detailing why the security test was added, the threat model boundary addressed, the fix implemented, and test passing confirmation.
+> 6. **Local Context & Skill Evolution**: When enabled, the hook appends newly verified conventions directly to the directory-level `CONTEXT.md` and outputs actionable suggestions for updating relevant `SKILL.md` files so future agent sessions avoid repeating the issue.
 
 
 ---

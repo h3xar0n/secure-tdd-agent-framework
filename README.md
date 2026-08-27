@@ -3,10 +3,7 @@
 > **A TDD and QA framework with integrated security for AI coding agents and developers.** Combines functional test-first engineering, living STRIDE threat modeling, local code quality checks, and continuous skill self-evolution to mitigate recurring issues.
 
 > [!CAUTION]
-> **Use at Your Own Risk**: This repository is a demonstration of an approach and is not an officially supported product or framework. AI coding agents generate and execute code that may be unstable or perform unexpected actions. Run agentic workflows only in isolated development environments and never on systems with access to production credentials, sensitive customer data, or internal networks.
-
-> [!IMPORTANT]
-> **Responsible Use & Manual Verification**: AI models are non-deterministic and can generate incorrect patches or hallucinate findings. All automated code changes and findings must be manually reviewed and verified by a developer or security practitioner before deployment. Do not mass-file unverified, AI-generated reports to open-source maintainers. You are expected to inspect, adapt, and take full responsibility for using this code.
+> **Use at Your Own Risk**: This repository is a demonstration of an approach, not an officially supported framework. AI coding agents generate and execute code that may be unstable or perform unexpected actions. While this approach works to mitigate these very problems through test-first boundaries and local scanning, no testing framework offers a complete solution to model error. Run agentic workflows only in isolated development environments and never on systems with access to production credentials, sensitive customer data, or internal networks.
 
 ---
 

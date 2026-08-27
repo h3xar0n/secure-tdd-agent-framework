@@ -116,17 +116,14 @@ While dedicated security review tools often focus on deep offline batch audits a
   3. *Least privilege & safe sinks*: Parameterized queries, canonical path checking, and minimal returned data payloads.
 - Re-runs the test suite to confirm everything is passing (**GREEN**).
 
-#### Phase D: Local Refactoring, Quality & Scanning (Refactor Phase)
-- **Core Skill**: `local_refactor_scanner`
-- Runs code cleanup for readability, maintainability, and efficiency while ensuring zero test regressions.
-- Executes fast deterministic checks on changed files (secrets, dependency vulnerabilities, local Semgrep SAST).
-- Conducts a guided AI review to verify architectural boundaries and eliminate logic flaws.
-- Keeps diffs small, surgical, and baseline-stable.
+#### Phase D: Refactoring, Quality, Context & Continuous Evolution (Refactor Phase)
+- **Core Skills**: `local_refactor_scanner`, `skill_evolution_updater`
+- **Beyond Code Cleanup**: The Refactor phase is NOT just about polishing code—it is also about **updating local project context** and **evolving skills** to prevent recurrence of bugs, regressions, and security flaws:
+  1. *Code Cleanliness & Maintainability*: Eliminate duplication, improve modularity, and verify 100% passing test regressions.
+  2. *Local Scans & Guided Review*: Fast deterministic checks on changed files (secrets, dependency CVEs, local Semgrep SAST) + guided AI review to verify architectural boundaries.
+  3. *Update Local Context (`CONTEXT.md`)*: Extract systemic lessons, approved helpers, and newly established conventions, appending them directly to `CONTEXT.md` under `## 4. Continuous Evolution: Auto-Evolved Conventions`.
+  4. *Evolve & Suggest Skill Updates (`SKILL.md`)*: If a recurring anti-pattern, tricky edge case, or specialized QA/security workflow was identified, suggest or apply updates to `SKILL.md` instructions so the team and future AI agent sessions inherit the fix upfront and never repeat the mistake.
 
-#### Continuous Evolution: Updating Skills & Context
-- **Core Skill**: `skill_evolution_updater`
-- Extracts systemic rules from resolved bugs and newly introduced helpers (e.g., *"Always use `utils.security.safe_redirect()` for URL redirects"*).
-- Appends rules to `CONTEXT.md` under `## 4. Continuous Evolution: Auto-Evolved Conventions` and updates `SKILL.md` prompts so all future agent sessions inherit the knowledge.
 
 ---
 

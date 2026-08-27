@@ -13,4 +13,6 @@ Refactor implementation for clean code structure, modularity, and maintainabilit
 2. **Deterministic Scans**: Check for hardcoded secrets, unpinned dependencies/CVEs, and local SAST rules (`semgrep scan --config auto --json`).
 3. **Guided AI Review**: Check design issues, helper reuse, and business logic edge cases.
 4. **Small Diffs & High Stability**: Re-run the complete test suite to confirm zero regressions.
+5. **Context & Skill Evolution**: Capture newly established conventions into `CONTEXT.md` and suggest/apply updates to `SKILL.md` to prevent recurrence of issues.
+
 

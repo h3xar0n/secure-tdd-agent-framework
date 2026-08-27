@@ -4,13 +4,13 @@
 
 ---
 
-## 1. Executive Summary & Philosophy: Security as Part of QA
+## 1. Security as Part of Quality
 
-Test-Driven Development (TDD) forms the basis of reliable **Quality Assurance (QA)**: writing tests first clarifies requirements, documents expected behavior, and catches regressions early. 
+Test-Driven Development (TDD) writes tests first to encode the requirements early on and target development against discrete goals. It documents expected behavior, catches regressions early, and keeps the agent zeroed in on implementing verifiable logic instead of guessing. This reduces some of the common issues with AI generated code, for example hallucinated features, hallucinations on test coverage, and going off on sidequests to recreate entire helper libraries, which is a nightmare to even run agentic reviews against.
 
 Historically, software engineering has often treated **functional QA** and **security testing** as completely separate disciplines:
 - **QA** runs during development and CI to verify business logic, user journeys, and regressions.
-- **Security** is siloed into delayed post-merge scans or third-party audits (leading to 20–70 day remediation cycles and high context-switching costs).
+- **Security** is siloed into delayed post-merge scans or third-party audits (leading to an average 20-day remediation cycle, deliterious impacts to throughput, and high context-switching costs). With AI agents, this old approach may lead to more growth risk than the security risk it mitigates, and it certainly costs more to fix later than the moment the code is written.
 
 ### The Flaw with Reviewing ONLY in CI/CD
 When security and QA reviews happen **only** downstream in CI/CD or post-merge pipelines:
@@ -19,12 +19,12 @@ When security and QA reviews happen **only** downstream in CI/CD or post-merge p
 - **Compounding Technical Debt**: AI coding agents without local QA guardrails generate unchecked assumptions and subtle logic bypasses that escape into the codebase.
 
 ### Security as Part of Software Quality (and the Stability Risk of Isolation)
-A core philosophical pillar of this framework is that **security is not an isolated specialty or an afterthought, but an intrinsic part of software quality**:
+**Security is an intrinsic part of software quality.** Treating security separately from functional development introduces direct risks to system stability:
 
-- **Isolated Security Threatens Stability**: When security is treated in isolation from functional development, it actively poses a risk to system stability. Out-of-band security scans, external remediation workflows, or isolated security patches frequently introduce regressions, break existing API contracts, and cause unexpected production outages because they modify code without full context of the application's functional requirements.
-- **Co-Verification via TDD**: A security patch that breaks functional behavior is not a fix—it is a regression. By unifying security constraints with Test-Driven Development (TDD), defensive boundaries (authentication, input allow-lists, parameterized sinks) are codified into tests alongside functional acceptance criteria (happy paths, business workflows). This helps patches preserve both security and operational stability.
+- **Isolated Security Threatens Stability**: When security is treated in isolation from functional development, it actively poses a risk to system stability. Out-of-band security scans, external remediation workflows, or isolated security patches frequently introduce regressions, break existing API contracts, and cause unexpected production outages because they modify code without context of the application's functional requirements.
+- **Co-Verification via TDD**: Security patches that break functional behavior introduce regressions into production. Unifying security constraints with Test-Driven Development (TDD) codifies defensive boundaries (authentication, input allow-lists, parameterized sinks) into tests alongside functional acceptance criteria (happy paths, business workflows). This supports preserving both security and operational stability.
 
-**The Inner-Loop Advantage**: By moving threat modeling and security test assertions into the developer's local test-first loop (TDD), issues are caught and eliminated in seconds while the code is actively being written.
+**The Inner-Loop Advantage**: Moving threat modeling and security test assertions into the developer's local test-first loop (TDD) eliminates issues in seconds while code is actively being written.
 
 ```
        +------------------------------------------------------------------+
@@ -66,7 +66,7 @@ This framework brings together two inspirations:
 Dedicated security review engines like **[Google Mantis](https://github.com/google/mantis)** serve as powerful standalone security reviewers—performing deep offline batch sweeps, multi-repository research, and exploit reproduction in isolated environments.
 
 - **Deeper Security Belongs in CI/CD**: Exhaustive testing (fuzzing, dynamic analysis, complex multi-repo exploit research, and whole-dependency graphing) **should still take place in CI/CD**.
-- **CI/CD Is a Safety Backstop, Not Primary Discovery**: CI/CD should not be the primary place to find everyday functional flaws or security findings. The inner-loop framework aims to eliminate most issues locally during active development so code reaching CI/CD is already tested and verified.
+- **CI/CD as a Secondary Safety Backstop**: CI/CD functions as a safety backstop for long-running checks, while the inner-loop framework eliminates functional flaws and security findings locally during active development.
 
 ### Solo Developers vs. Scaling to Teams & Centralized Architectures
 - **Out of the Box for Solo Developers**:

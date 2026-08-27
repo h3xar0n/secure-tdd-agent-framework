@@ -174,32 +174,34 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
                        (AST Checks & Autofixes)
                                    │
             ┌──────────────────────┼──────────────────────┐
-      (Scan Error)           (No Findings)          (Findings Found)
+      (Scan Error)           (No Findings)          (Threat-Model Findings)
             │                      │                      │
             ▼                      │                      ▼
-    [ Check Fail-Open ]            │         [ Evaluate Against Threat Model ]
-    SECURITY_GATE_ALLOW_ON_ERROR   │           (Matches active trust boundary?)
+    [ Check Fail-Open ]            │            [ 3-Attempt TDD Loop ]
+    SECURITY_GATE_ALLOW_ON_ERROR   │        (Add Test -> Fix -> Run Suite)
             │                      │                      │
      ┌──────┴──────┐               │               ┌──────┴──────┐
-  (false)        (true)            │             (No)          (Yes)
+  (false)        (true)            │         (Fixed in <= 3)  (Fails Past 3)
      │             │               │               │             │
      ▼             ▼               │               ▼             ▼
-[ Deny Push  ] [ Log Error ]       │       [ Log Advisory ] [ TDD Autofix Loop:   ]
-[& Escalate  ] [ Proceed   ]       │       [   Proceed    ] [ Add Test -> Fix ->  ]
-                   │               │               │        [ Run Suite -> Pass   ]
+[ Deny Push  ] [ Log Error ]       │       [ Import Fix & ] [ Import Unresolved ]
+[& Escalate  ] [ Proceed   ]       │       [ Context to   ] [ Finding to        ]
+                   │               │       [ Stage 2      ] [ Stage 2           ]
                    │               │               │             │
                    └───────────────┼───────────────┴─────────────┘
                                    │
                                    ▼
                        [ Stage 2: Semantic Scan ]
                       (Contextual AI / CodeMender)
+                       - Verify Imported Fixes
+                       - Ingest Remaining Findings
                                    │
             ┌──────────────────────┼──────────────────────┐
-      (Scan Error)           (No Findings)          (Threat-Model Findings)
-            │                      │                      │
-            ▼                      ▼                      ▼
-    [ Check Fail-Open ]      [ Allow Push ]     [ 3-Attempt TDD Test Loop ]
-    SECURITY_GATE_ALLOW_ON_ERROR               (Add Test -> Fix -> Run Full Suite)
+      (Scan Error)           (No Findings /         (Threat-Model Findings)
+            │                Verified Clean)              │
+            ▼                      │                      ▼
+    [ Check Fail-Open ]      [ Allow Push ]     [ 3-Attempt TDD Loop ]
+    SECURITY_GATE_ALLOW_ON_ERROR               (Add Test -> Fix -> Run Suite)
             │                                             │
      ┌──────┴──────┐                       ┌──────────────┴──────────────┐
   (false)        (true)               (Fails Tests                  (Passes in
@@ -222,11 +224,12 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
             [    Allow Push      ]
 ```
 
-> **TDD Principles in Hook Remediation**:
+> **TDD Principles & Cross-Stage Verification in Hook Remediation**:
 > Every automated fix follows the Test-Driven Development (TDD) cycle rather than applying isolated code patches:
 > 1. **Add Boundary Test First (RED)**: A test case reproducing the finding or boundary constraint is added to the test suite and confirmed failing.
 > 2. **Apply Minimal Fix (GREEN)**: The defensive code change is applied to satisfy the failing test.
 > 3. **Full Suite Regression Verification**: The complete test suite is executed across all existing unit and integration tests to confirm that existing functionality is preserved and regressions are caught early.
+> 4. **Cross-Stage Context Import**: Fixes applied during the Stage 1 deterministic scan are imported into Stage 2 so the contextual AI engine verifies them against semantic constraints. If a Stage 1 fix cannot pass tests within 3 attempts, the unresolved finding is imported directly into Stage 2 for multi-file contextual remediation.
 
 
 ---

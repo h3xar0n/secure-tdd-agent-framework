@@ -90,6 +90,44 @@ def sync_antigravity(target_repo: Path) -> int:
         if copy_file_if_changed(UPSTREAM_ROOT / doc, target_repo / doc):
             changes += 1
 
+    # 4. Generate dedicated Antigravity README.md
+    antigravity_readme = """# Secure TDD for Antigravity
+
+> **Secure Test-Driven Development (Secure TDD) agent skills, rules, and pre-push hooks for Antigravity AI coding agents.**
+
+This repository is the dedicated Antigravity distribution of the **[Secure TDD Agent Framework](https://github.com/h3xar0n/secure-tdd-agent-framework)**.
+
+## What's Included
+
+- `.agents/rules/secure_tdd_workflow.md`: Always-on 4-phase workflow rule (`PLAN` -> `RED` -> `GREEN` -> `REFACTOR`).
+- `.agents/skills/`: Specialized agent skills for threat modeling, security test writing, defensive coding, local refactor scanning, and skill evolution.
+- `.agents/hooks.json` & `.agents/security_gate_hook.sh`: Local pre-push hook enforcing test-first verification before code reaches remote repositories.
+- `CONTEXT.md`: Living repository context, trust boundaries, and approved helpers.
+- `AGENTS.md`: Universal agent reference guide.
+
+## Getting Started
+
+1. Open this repository or copy `.agents/`, `AGENTS.md`, and `CONTEXT.md` into your Antigravity project root.
+2. The agent automatically discovers the workflow rules and skills.
+3. Test the local pre-push hook:
+   ```bash
+   bash .agents/tests/run_tests.sh
+   ```
+
+## Upstream Canonical Framework
+
+All skills, rules, and threat models are maintained in the canonical upstream repository:  
+🔗 **[h3xar0n/secure-tdd-agent-framework](https://github.com/h3xar0n/secure-tdd-agent-framework)**
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
+"""
+    ag_readme_path = target_repo / "README.md"
+    if not ag_readme_path.exists() or ag_readme_path.read_text(encoding="utf-8") != antigravity_readme:
+        ag_readme_path.write_text(antigravity_readme, encoding="utf-8")
+        changes += 1
+
     print(f"  -> Antigravity sync complete ({changes} files updated).")
     return changes
 
@@ -116,7 +154,47 @@ def sync_claude_code(target_repo: Path) -> int:
         if copy_file_if_changed(UPSTREAM_ROOT / doc, target_repo / doc):
             changes += 1
 
-    # 3. Sync modular hook & libraries
+    # 3. Generate dedicated Claude Code README.md
+    claude_readme = """# Secure TDD for Claude Code
+
+> **Secure Test-Driven Development (Secure TDD) workflow instructions, skills, and pre-tool hooks for Claude Code CLI agents.**
+
+This repository is the dedicated Claude Code distribution of the **[Secure TDD Agent Framework](https://github.com/h3xar0n/secure-tdd-agent-framework)**.
+
+## What's Included
+
+- `CLAUDE.md`: System prompt instructions loaded on Claude Code session start to enforce the 4-phase inner loop (`PLAN` -> `RED` -> `GREEN` -> `REFACTOR`).
+- `.claude/skills/`: Specialized kebab-case agent skills for threat modeling, security test writing, defensive coding, and refactor scanning.
+- `.claude/settings.json` & `.claude/hooks/security_gate_hook.sh`: PreToolUse bash hook enforcing test-first verification before `git push` runs.
+- `CONTEXT.md`: Living repository context, trust boundaries, and approved helpers.
+
+## Getting Started
+
+1. Open this repository in your terminal and launch Claude Code:
+   ```bash
+   claude
+   ```
+2. Claude Code automatically ingests `CLAUDE.md` and discovers skills in `.claude/skills/`.
+3. Test the local pre-tool hook:
+   ```bash
+   bash .claude/hooks/tests/run_tests.sh
+   ```
+
+## Upstream Canonical Framework
+
+All skills, rules, and threat models are maintained in the canonical upstream repository:  
+🔗 **[h3xar0n/secure-tdd-agent-framework](https://github.com/h3xar0n/secure-tdd-agent-framework)**
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
+"""
+    cl_readme_path = target_repo / "README.md"
+    if not cl_readme_path.exists() or cl_readme_path.read_text(encoding="utf-8") != claude_readme:
+        cl_readme_path.write_text(claude_readme, encoding="utf-8")
+        changes += 1
+
+    # 4. Sync modular hook & libraries
     claude_hooks_dst = target_repo / ".claude" / "hooks"
     if copy_file_if_changed(UPSTREAM_ROOT / ".agents" / "security_gate_hook.sh", claude_hooks_dst / "security_gate_hook.sh"):
         changes += 1

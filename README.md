@@ -1,12 +1,12 @@
 # Secure Test-Driven Development (Secure TDD) Agent Framework
 
-> **A comprehensive Test-Driven Development (TDD) and Quality Assurance (QA) framework with integrated proactive security at every step for AI coding agents and developers.** Unites functional test-first engineering, living STRIDE threat modeling, local deterministic code quality checks, and continuous skill self-evolution to prevent recurring issues.
+> **A test-driven development and quality assurance framework with integrated security for AI coding agents and developers.** Combines functional test-first engineering, living STRIDE threat modeling, local code quality checks, and continuous skill self-evolution to mitigate recurring issues.
 
 ---
 
 ## 1. Executive Summary & Philosophy: Security as Part of QA
 
-Test-Driven Development (TDD) is the cornerstone of robust **Quality Assurance (QA)**: it guarantees functional correctness, documents expected behavior, handles edge cases, and prevents regressions. 
+Test-Driven Development (TDD) forms the basis of reliable **Quality Assurance (QA)**: writing tests first clarifies requirements, documents expected behavior, and catches regressions early. 
 
 Historically, software engineering has often treated **functional QA** and **security testing** as completely separate disciplines:
 - **QA** runs during development and CI to verify business logic, user journeys, and regressions.
@@ -19,13 +19,12 @@ When security and QA reviews happen **only** downstream in CI/CD or post-merge p
 - **Compounding Technical Debt**: AI coding agents without local QA guardrails generate unchecked assumptions and subtle logic bypasses that escape into the codebase.
 
 ### Security as Part of Software Quality (and the Stability Risk of Isolation)
-A core philosophical pillar of this framework is that **security is not an isolated specialty or an afterthought—it is an intrinsic dimension of software quality**:
+A core philosophical pillar of this framework is that **security is not an isolated specialty or an afterthought, but an intrinsic part of software quality**:
 
 - **Isolated Security Threatens Stability**: When security is treated in isolation from functional development, it actively poses a risk to system stability. Out-of-band security scans, external remediation workflows, or isolated security patches frequently introduce regressions, break existing API contracts, and cause unexpected production outages because they modify code without full context of the application's functional requirements.
-- **Co-Verification via TDD**: A security patch that breaks functional behavior is not a fix—it is a regression. By unifying security constraints with Test-Driven Development (TDD), every defensive boundary (authentication, input allow-lists, parameterized sinks) is codified into tests alongside functional acceptance criteria (happy paths, business workflows). This ensures patches preserve both security *and* operational stability simultaneously.
+- **Co-Verification via TDD**: A security patch that breaks functional behavior is not a fix—it is a regression. By unifying security constraints with Test-Driven Development (TDD), defensive boundaries (authentication, input allow-lists, parameterized sinks) are codified into tests alongside functional acceptance criteria (happy paths, business workflows). This helps patches preserve both security and operational stability.
 
 **The Inner-Loop Advantage**: By moving threat modeling and security test assertions into the developer's local test-first loop (TDD), issues are caught and eliminated in seconds while the code is actively being written.
-
 
 ```
        +------------------------------------------------------------------+
@@ -36,7 +35,7 @@ A core philosophical pillar of this framework is that **security is not an isola
        |   | - Happy paths            |    | - Input allow-lists      |   |
        |   | - Business logic rules   | +  | - Auth & access control  |   |
        |   | - Boundary & edge cases  |    | - Safe sinks & params    |   |
-       |   | - Regression protection  |    | - Injection prevention   |   |
+       |   | - Regression protection  |    | - Injection mitigation   |   |
        |   +--------------------------+    +--------------------------+   |
        +---------------------------------+--------------------------------+
                                          |
@@ -48,7 +47,7 @@ A core philosophical pillar of this framework is that **security is not an isola
 1. **Holistic Planning & Threat Modeling**: Features are planned with both functional user stories and STRIDE boundary constraints *before* code is authored.
 2. **Comprehensive Test-First (RED)**: Unit and integration tests assert both functional outcomes (HTTP 200/302, correct payloads) and defensive boundaries (HTTP 400/401/403, input validation rejections).
 3. **Clean, Defensive Implementation (GREEN)**: Minimal, maintainable production code satisfies functional specifications while using safe design patterns (allow-lists, parameterized queries, least privilege).
-4. **Local Refactoring & Deterministic Scanning (REFACTOR)**: Fast local checks (linting, test suite regression passes, secret detection, Semgrep SAST) ensure high code quality before commits.
+4. **Local Refactoring & Deterministic Scanning (REFACTOR)**: Fast local checks (linting, test suite regression passes, secret detection, Semgrep SAST) verify code quality before commits.
 5. **Continuous Quality & Security Evolution**: When edge cases, bugs, or security patterns are resolved, the framework captures the lesson into `CONTEXT.md` and `SKILL.md` so the entire team and agent fleet learn permanently.
 6. **No Heavy Database Required**: All state is managed transparently via plain Markdown (`CONTEXT.md`, `threat_model.md`) and append-only logs (`.security-gate/`).
 
@@ -67,7 +66,7 @@ This framework brings together two foundational inspirations:
 Dedicated security review engines like **[Google Mantis](https://github.com/google/mantis)** serve as powerful standalone security reviewers—performing deep offline batch sweeps, multi-repository research, and exploit reproduction in isolated environments.
 
 - **Deeper Security Belongs in CI/CD**: Exhaustive testing (fuzzing, dynamic analysis, complex multi-repo exploit research, and whole-dependency graphing) **should still take place in CI/CD**.
-- **CI/CD Is a Safety Backstop, Not Primary Discovery**: CI/CD should never be the *primary* point where everyday functional flaws and security vulnerabilities are discovered. The inner-loop framework aims to eliminate the vast majority of issues locally during active development, ensuring that code reaching CI/CD is already robust, tested, and defensively sound.
+- **CI/CD Is a Safety Backstop, Not Primary Discovery**: CI/CD should not be the primary place to find everyday functional flaws or security findings. The inner-loop framework aims to eliminate most issues locally during active development so code reaching CI/CD is already tested and verified.
 
 ### Solo Developers vs. Scaling to Teams & Centralized Architectures
 - **Out of the Box for Solo Developers**:
@@ -78,7 +77,7 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
   - **Governance on Skill Evolution**: In a team or enterprise environment, individual coding agents should not have permission to directly mutate skills in a shared registry. Instead, the agent's continuous evolution phase can be configured to submit *suggested skill improvements, PR proposals, or ticket drafts* for review by QA and security leads.
 - **Extensible by Design**: The framework is intentionally unopinionated and modular—it works effortlessly out of the box for an individual developer, while providing clear extension points to integrate with centralized registries, team knowledge bases, and enterprise CI/CD systems.
 
-### Key Design Principles:
+### Design Principles:
 1. **Developer Inner-Loop Integration**: Plugs directly into everyday development tools (`git`, `pytest`, `unittest`, local linters) without requiring heavyweight infrastructure or out-of-band audit cycles.
 2. **Modular & Extensible Skills**: Skills are loosely coupled and self-contained in standard `SKILL.md` packages. Developers can freely adopt, customize, or extend whichever skills suit their project (e.g. adding custom domain linters, specialized QA runbooks, or tailored threat models).
 3. **Multi-Agent Portability**: Built on open agent skill standards (standard YAML frontmatter and Markdown), allowing identical skills to run seamlessly across **Antigravity**, **Claude Code**, and other coding assistants.
@@ -156,11 +155,11 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
 
 #### Phase D: Refactoring, Quality, Context & Continuous Evolution (Refactor Phase)
 - **Core Skills**: `local_refactor_scanner`, `skill_evolution_updater`
-- **Beyond Code Cleanup**: The Refactor phase is NOT just about polishing code—it is also about **updating local project context** and **evolving skills** to prevent recurrence of bugs, regressions, and security flaws:
+- **Refactor & Context Evolution**: Along with code cleanup, the Refactor phase updates local project context and evolves skills to mitigate recurring bugs and security findings:
   1. *Code Cleanliness & Maintainability*: Eliminate duplication, improve modularity, and verify 100% passing test regressions.
   2. *Local Scans & Guided Review*: Fast deterministic checks on changed files (secrets, dependency CVEs, local Semgrep SAST) + guided AI review to verify architectural boundaries.
   3. *Update Local Context (`CONTEXT.md`)*: Extract systemic lessons, approved helpers, and newly established conventions, appending them directly to `CONTEXT.md` under `## 4. Continuous Evolution: Auto-Evolved Conventions`.
-  4. *Evolve & Suggest Skill Updates (`SKILL.md`)*: If a recurring anti-pattern, tricky edge case, or specialized QA/security workflow was identified, suggest or apply updates to `SKILL.md` instructions so the team and future AI agent sessions inherit the fix upfront and never repeat the mistake.
+  4. *Evolve & Suggest Skill Updates (`SKILL.md`)*: If a recurring anti-pattern, tricky edge case, or specialized QA/security workflow was identified, suggest or apply updates to `SKILL.md` instructions so future AI agent sessions inherit the rule upfront and avoid repeating the mistake.
 
 
 ---

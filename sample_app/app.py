@@ -11,7 +11,7 @@ app.config['SECRET_KEY'] = os.getenv('APP_SECRET_KEY', 'default-dev-key')
 UPLOAD_DIRECTORY = os.getenv('UPLOAD_DIR', '/tmp/sample_uploads')
 ALLOWED_REDIRECT_HOSTS = {'localhost', '127.0.0.1', 'example.com'}
 
-# Ensure sample upload directory exists
+# Create sample upload directory if not present
 os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
 
 

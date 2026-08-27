@@ -21,7 +21,7 @@ This repository enforces **Test-Driven Development with Integrated Security (Sec
 4. **Phase D (Refactor, Quality & Local Scan)**:
    - Clean up code, eliminate duplication, and verify 100% passing test regressions across the suite.
    - Perform local deterministic scans on changed files (secrets, dependencies, Semgrep).
-   - Review code for logic bypasses and ensure diffs are minimal and surgical.
+   - Review code for logic bypasses and keep diffs minimal and surgical.
 
 5. **Continuous Evolution (Learn & Update)**:
    - When a bug, convention, or helper is introduced, extract the systemic rule and append it to `CONTEXT.md` under `## 4. Continuous Evolution: Auto-Evolved Conventions`.

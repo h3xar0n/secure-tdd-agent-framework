@@ -19,7 +19,7 @@ def resolve_safe_path(base_dir: str, user_path: str) -> str:
     canonical_base = os.path.realpath(base_dir)
     target_path = os.path.realpath(os.path.join(canonical_base, user_path.lstrip("/")))
     
-    # Strict prefix check with directory separator to prevent partial prefix match
+    # Strict prefix check with directory separator to mitigate partial prefix match
     expected_prefix = canonical_base if canonical_base.endswith(os.sep) else canonical_base + os.sep
     if not target_path.startswith(expected_prefix) and target_path != canonical_base:
         raise ValueError(f"Path traversal detected: {user_path} escapes {base_dir}")

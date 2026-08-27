@@ -1,6 +1,6 @@
 # Secure Test-Driven Development (Secure TDD) Agent Framework
 
-> **A comprehensive Test-Driven Development (TDD) and Quality Assurance (QA) framework with integrated security guardrails for AI coding agents and developers.** Unites functional test-first engineering, living STRIDE threat modeling, local deterministic code quality checks, and continuous skill self-evolution.
+> **A comprehensive Test-Driven Development (TDD) and Quality Assurance (QA) framework with integrated proactive security at every step for AI coding agents and developers.** Unites functional test-first engineering, living STRIDE threat modeling, local deterministic code quality checks, and continuous skill self-evolution to prevent recurring issues.
 
 ---
 
@@ -12,7 +12,8 @@ Historically, software engineering has often treated **functional QA** and **sec
 - **QA** runs during development and CI to verify business logic, user journeys, and regressions.
 - **Security** is siloed into delayed post-merge scans or third-party audits (leading to 20–70 day remediation cycles and high context-switching costs).
 
-Similarly, AI coding agents without structured QA guardrails frequently write unverified code with fragile edge cases and subtle security holes.
+Similarly, AI coding agents without structured QA guidance frequently write unverified code with fragile edge cases and subtle security holes that can compound over time and are hard to find and review later.
+
 
 ```
        +------------------------------------------------------------------+

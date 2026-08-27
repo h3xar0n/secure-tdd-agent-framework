@@ -1,7 +1,12 @@
-# Defensive Developer Skill (Phase C: GREEN Phase)
+---
+name: defensive_developer
+description: Implements clean, maintainable production code to deliver features and satisfy functional and security test assertions (Phase C: GREEN).
+---
+
+# Feature Implementation & Defensive Developer Skill (Phase C: GREEN Phase)
 
 ## Overview
-Implement the minimum production code required to satisfy the failing tests from Phase B while strictly adhering to defensive coding principles and project conventions in `CONTEXT.md`.
+Implement clean, modular production code that delivers the requested feature or bug fix and satisfies all functional, edge-case, and security assertions from Phase B while adhering to defensive design principles and project conventions in `CONTEXT.md`.
 
 ## Three Defensive Pillars
 1. **Simple Input Validation**:
@@ -16,10 +21,11 @@ Implement the minimum production code required to satisfy the failing tests from
    - Mask credentials, PII, and omit internal stack traces in error messages.
 
 ## Execution Sequence
-1. **Inspect Failing Tests & Rules**: Review the failing tests from Phase B and the rules in `CONTEXT.md`.
-2. **Author Minimal Defensive Code**:
-   - Implement only the logic necessary to satisfy the assertions.
-   - Use approved helpers (e.g. `utils.security.resolve_safe_path`, parameterized SQL statements).
+1. **Inspect Failing Tests & Rules**: Review the functional requirements, failing tests from Phase B, and conventions in `CONTEXT.md`.
+2. **Author Clean Production Code**:
+   - Implement the business logic and algorithms required to satisfy the functional feature requirements.
+   - Apply defensive patterns (e.g. `utils.security.resolve_safe_path`, parameterized SQL statements, `pydantic` schemas).
 3. **Confirm GREEN State**:
-   - Run the test suite.
-   - Verify that all tests pass cleanly without errors.
+   - Run the project test suite.
+   - Verify that all functional and security tests pass cleanly without errors.
+

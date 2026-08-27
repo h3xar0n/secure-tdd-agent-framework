@@ -1,9 +1,10 @@
 ---
 name: history-context-seeder
-description: Mines VCS history to seed CONTEXT.md with past vulnerability lessons and conventions.
+description: Analyzes repository Git history for past bug fixes, architectural conventions, and security patterns to seed CONTEXT.md on onboarding.
 ---
 
-# History Context Seeder Skill (Repository Onboarding)
+# History & Architectural Context Seeder Skill (Repository Onboarding)
 
 ## Overview
-Analyzes Git history and past security commits to extract recurring vulnerability patterns, security fixes, and architectural conventions, seeding `CONTEXT.md` on initial setup.
+Analyzes Git history and past fix commits to extract recurring bug patterns, architectural conventions, and security patterns, seeding `CONTEXT.md` on initial setup.
+

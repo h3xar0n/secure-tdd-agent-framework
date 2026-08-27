@@ -1,15 +1,16 @@
 ---
 name: skill-evolution-updater
-description: Extracts systemic lessons from local remediations and updates CONTEXT.md and SKILL.md specs.
+description: Extracts systemic conventions from resolved bugs, patterns, and refactors to update CONTEXT.md and agent skills (Continuous Evolution).
 ---
 
-# Skill Evolution Updater Skill (Continuous Evolution)
+# Skill & Conventions Evolution Updater (Continuous Evolution)
 
 ## Overview
-Ensure the agent continuously learns from local fixes and refactoring so that systemic mistakes are never repeated in future agent cycles.
+Ensure the development team and agent fleet continuously learn from local fixes, architecture decisions, and refactoring patterns so that systemic quality and security standards are retained permanently.
 
 ## Execution Sequence
-1. Analyze the completed remediation diff.
+1. Analyze the completed feature implementation or bug fix diff.
 2. Extract the actionable systemic rule (e.g. approved helper or pattern).
 3. Append the rule to `CONTEXT.md` under `## 4. Continuous Evolution: Auto-Evolved Conventions`.
-4. Update skills or rules if general anti-patterns were caught.
+4. Update skills or rules if general conventions or anti-patterns were refined.
+

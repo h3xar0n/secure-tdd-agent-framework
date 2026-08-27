@@ -1,24 +1,31 @@
-# Local Refactor & Scanner Skill (Phase D: Refactor & Secure)
+---
+name: local_refactor_scanner
+description: Refactors code for quality and maintainability, executes full test suite regression passes, and runs local deterministic security/lint scans (Phase D: REFACTOR).
+---
+
+# Code Refactoring, Quality & Local Scanner Skill (Phase D: REFACTOR Phase)
 
 ## Overview
-Validate code quality, eliminate redundancies, and block pattern-based flaws locally prior to code commit. Ensure fixes are isolated into minimal, surgical diffs that preserve baseline stability.
+Refactor implementation for clean code structure, modularity, and maintainability while ensuring 100% passing test regressions and blocking pattern-based security flaws locally prior to commit.
 
 ## Verification Guardrails
-1. **Deterministic Scans (Fast & Offline)**:
+1. **Code Quality & Refactoring**:
+   - Clean up boilerplate, eliminate dead code, and centralize common utilities.
+   - Improve variable naming, modularity, and type annotations without altering verified behavior.
+2. **Deterministic Scans (Fast & Offline)**:
    - **Secrets**: Check diffs for plaintext credentials, tokens, or private keys.
    - **Dependencies**: Flag unpinned dependencies or known CVEs in new packages.
    - **Rules-Based SAST**: Run local SAST rules on modified files (`semgrep scan --config auto --json` or `cm find`).
-2. **Guided AI Review**:
-   - Audit architecture and design issues that static AST tools miss.
-   - Identify opportunities to refactor repeated logic into centralized security helpers.
-   - Review business logic flows for logical bypasses or privilege escalation risks.
-   - Disprove false positives using an adversarial stance (evaluating claims based strictly on code evidence).
-3. **Small Diffs & High Stability**:
-   - Run the complete project test suite to verify zero regressions.
-   - Ensure the diff contains only targeted changes directly related to the task scope.
+3. **Guided AI Review**:
+   - Audit architecture and design issues that static tools miss.
+   - Review business logic and edge cases for bypasses or regression risks.
+4. **Small Diffs & Regression QA**:
+   - Run the complete project test suite to verify zero regressions across existing and new tests.
+   - Ensure the diff contains only surgical changes directly related to the task scope.
 
 ## Execution Sequence
 1. Review the git diff of modified files (`git diff`).
-2. Run local scanner on changed files.
-3. Clean up boilerplate, centralize helpers, and eliminate code duplication.
+2. Refactor code for clarity, maintainability, and helper reuse.
+3. Run local linters and security scanners on changed files.
 4. Run the full test suite to guarantee 100% passing tests.
+

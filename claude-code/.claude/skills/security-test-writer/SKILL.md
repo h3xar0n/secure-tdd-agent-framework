@@ -1,19 +1,20 @@
 ---
 name: security-test-writer
-description: Translates security criteria and threat models into failing (RED) unit and integration tests.
+description: Authors test-first unit and integration tests covering functional behavior, edge cases, and security boundaries (Phase B: RED).
 ---
 
-# Security Test Writer Skill (Phase B: RED Phase)
+# QA & Security Test Writer Skill (Phase B: RED Phase)
 
 ## Overview
-Translate the security criteria and trust boundaries defined in `threat_model.md` into executable test cases that fail initially (RED) to verify defense boundaries before any functional logic is authored.
+Translate functional requirements and security criteria from `threat_model.md` and `CONTEXT.md` into executable test cases that fail initially (RED), asserting expected business logic, edge-case handling, and security boundaries before production code is authored.
 
 ## Three Verification Pillars
-1. **Behavior-Driven Outcomes**: Assert strictly on API/HTTP outcomes (status codes 400/401/403, error response schemas) and boundary contracts rather than mocking internal private methods.
+1. **Behavior-Driven Outcomes**: Assert strictly on API/HTTP outcomes (status codes 200/302 for valid requests, 400/401/403 for invalid/unauthorized, expected JSON responses) rather than mocking internal private methods.
 2. **Strict Test Isolation**: Ensure test setup and teardown cleanly isolate state (e.g., transaction rollbacks, fresh test contexts) so state never bleeds between test runs.
-3. **Integration Over Fragile Mocking**: Utilize local test databases or real server contexts rather than fragile fake mocks to verify realistic security behavior.
+3. **Integration Over Fragile Mocking**: Utilize local test databases or real server contexts rather than fragile fake mocks to verify realistic functional and security behavior.
 
 ## Execution Sequence
-1. Read `threat_model.md` and extract the Security Acceptance Criteria.
-2. Write test cases covering functional requirements, authentication/authorization boundaries, input validation, and exploit payloads.
-3. Run the project test suite and verify tests **FAIL** for the expected assertion reason (and not syntax/import errors).
+1. Read the task requirements, `threat_model.md`, and `CONTEXT.md`.
+2. Write test cases covering functional happy paths, edge cases, authentication/authorization boundaries, and input validation.
+3. Run the project test suite and verify tests **FAIL** for the expected assertion reason (**RED**).
+

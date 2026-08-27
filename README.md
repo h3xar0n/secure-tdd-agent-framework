@@ -127,18 +127,20 @@ While dedicated security review tools often focus on deep offline batch audits a
 
 ---
 
-## 4. Repository Structure & Multi-Agent Compatibility
+## 4. Single Source of Truth & Downstream Distributions
 
-The repository is organized to support **Antigravity**, **Claude Code**, and **Universal AI Agents** simultaneously:
+This repository (`secure-tdd-agent-framework`) serves as the **canonical upstream single source of truth** for all skills, rules, threat models, and hook scripts.
+
+Instead of maintaining redundant duplicate folders, the framework automatically builds and synchronizes dedicated downstream distributions:
 
 ```none
-secure-tdd-agent-framework/
+secure-tdd-agent-framework/ (Canonical Upstream Source of Truth)
 ├── CONTEXT.md                         # Living project context, boundaries & evolved conventions
 ├── threat_model.md                    # Living STRIDE threat model & acceptance criteria
 ├── AGENTS.md                          # Universal agent guidelines & inner-loop spec
 ├── CLAUDE.md                          # Claude Code always-on workflow instructions
 ├── requirements.txt                   # Framework dependencies (Flask, pytest, semgrep, pydantic)
-├── .agents/                           # Antigravity Workspace Config (Auto-discovered)
+├── .agents/                           # Canonical Skills & Hooks Source
 │   ├── rules/
 │   │   └── secure_tdd_workflow.md    # Always-on workflow rule (Plan -> Red -> Green -> Refactor)
 │   ├── skills/
@@ -153,12 +155,8 @@ secure-tdd-agent-framework/
 │   ├── security_gate_hook_semgrep.sh  # Semgrep security hook script
 │   ├── lib/gate_common.sh             # Common severity ranking & audit logger
 │   └── tests/                         # Offline hook test suite (26/26 mock tests)
-├── claude-code/                       # Claude Code Portable Port
-│   ├── CLAUDE.md
-│   └── .claude/
-│       ├── settings.json              # Claude Code hooks & permissions
-│       ├── hooks/                     # PreToolUse bash push interceptors
-│       └── skills/                    # Kebab-case Claude Code skills
+├── scripts/
+│   └── sync_downstream.py             # Automated downstream repository sync engine
 ├── sample_app/                        # Sample application demonstrating Secure TDD
 │   ├── app.py                         # Flask service with functional & defensive endpoints
 │   └── utils/security.py              # Approved security helpers (paths, redirects, SQL)
@@ -166,32 +164,30 @@ secure-tdd-agent-framework/
     └── test_sample_app.py             # Test suite combining functional QA & security assertions
 ```
 
+### Downstream Distribution Repositories:
+- **`secure-tdd-antigravity`**: Dedicated Antigravity / Jetski workspace package containing `.agents/`, `AGENTS.md`, and `CONTEXT.md`.
+- **`secure-tdd-claude-code`**: Dedicated Claude Code CLI package containing `.claude/` (with kebab-case skills and bash hooks), `CLAUDE.md`, and `CONTEXT.md`.
+
 ---
 
-## 5. Quickstart & Installation
+## 5. Automated Downstream Synchronization
 
-### Option 1: Using with Antigravity
-The `.agents/` folder at the root of this repository is auto-discovered.
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Activate the Semgrep hook (or keep default CodeMender):
-   ```bash
-   cp .agents/hooks_semgrep.json .agents/hooks.json
-   ```
-3. Start coding! Antigravity will automatically follow the `secure_tdd_workflow.md` rule across all QA and development tasks.
+Whenever updates are made to skills, rules, or hook scripts in this repository, the downstream repositories are updated automatically:
 
-### Option 2: Using with Claude Code
-1. Copy `claude-code/CLAUDE.md` and `claude-code/.claude/` to your workspace root:
-   ```bash
-   cp claude-code/CLAUDE.md ./
-   cp -r claude-code/.claude ./
-   ```
-2. If using Semgrep, activate the Semgrep settings:
-   ```bash
-   cp .claude/settings.semgrep.json .claude/settings.json
-   ```
+### 1. Manual / Scripted Sync
+```bash
+# Sync and automatically create git commits in downstream repos
+python3 scripts/sync_downstream.py --commit
+
+# Sync, commit, and push to downstream remotes
+python3 scripts/sync_downstream.py --commit --push
+```
+
+### 2. Local Git `post-commit` Hook
+A local git hook is configured in `.git/hooks/post-commit` to automatically run `sync_downstream.py --commit` on every commit in this repository.
+
+### 3. GitHub Actions CI/CD Sync
+The [.github/workflows/sync-downstream.yml](file:///.github/workflows/sync-downstream.yml) workflow automatically propagates changes to the downstream GitHub repositories whenever commits are pushed to `main`.
 
 ---
 
@@ -210,10 +206,11 @@ pytest tests/
 # Test Antigravity Hook
 bash .agents/tests/run_tests.sh
 
-# Test Claude Code Hook
-bash claude-code/.claude/hooks/tests/run_tests.sh
+# Test Claude Code Hook (in downstream repo)
+bash ../secure-tdd-claude-code/.claude/hooks/tests/run_tests.sh
 ```
 *Output: 52/52 mock tests passing across PASS, ADVISORY, ERROR, BLOCKED, and FIXED outcomes.*
+
 
 ---
 

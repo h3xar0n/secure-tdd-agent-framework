@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+"""Automated synchronization script to propagate canonical skills, hooks,
+
+and documentation from secure-tdd-agent-framework (Single Source of Truth)
+to downstream Antigravity and Claude Code repositories.
+"""
+
+import argparse
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+UPSTREAM_ROOT = Path(__file__).resolve().parent.parent
+
+
+def get_git_sha(repo_dir: Path) -> str:
+    try:
+        res = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return res.stdout.strip()
+    except Exception:
+        return "latest"
+
+
+def to_kebab_case(name: str) -> str:
+    return name.replace("_", "-")
+
+
+def copy_file_if_changed(src: Path, dst: Path) -> bool:
+    if not src.exists():
+        return False
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.exists():
+        if src.read_bytes() == dst.read_bytes():
+            return False
+    shutil.copy2(src, dst)
+    return True
+
+
+def copy_tree_sync(src_dir: Path, dst_dir: Path, exclude_patterns=None) -> int:
+    if not src_dir.exists():
+        return 0
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    updated_count = 0
+
+    for root, dirs, files in os.walk(src_dir):
+        rel_path = Path(root).relative_to(src_dir)
+        target_dir = dst_dir / rel_path
+        target_dir.mkdir(parents=True, exist_ok=True)
+
+        for file in files:
+            src_file = Path(root) / file
+            dst_file = target_dir / file
+            if copy_file_if_changed(src_file, dst_file):
+                updated_count += 1
+
+    return updated_count
+
+
+def sync_antigravity(target_repo: Path) -> int:
+    print(f"\n[1/2] Syncing to Antigravity repository: {target_repo}")
+    if not target_repo.exists():
+        print(f"  Warning: Target directory '{target_repo}' does not exist. Skipping.")
+        return 0
+
+    changes = 0
+
+    # 1. Sync .agents directory
+    changes += copy_tree_sync(UPSTREAM_ROOT / ".agents", target_repo / ".agents")
+
+    # 2. Sync shared docs & license
+    for doc in ["AGENTS.md", "CONTEXT.md", "LICENSE"]:
+        if copy_file_if_changed(UPSTREAM_ROOT / doc, target_repo / doc):
+            changes += 1
+
+    print(f"  -> Antigravity sync complete ({changes} files updated).")
+    return changes
+
+
+def sync_claude_code(target_repo: Path) -> int:
+    print(f"\n[2/2] Syncing to Claude Code repository: {target_repo}")
+    if not target_repo.exists():
+        print(f"  Warning: Target directory '{target_repo}' does not exist. Skipping.")
+        return 0
+
+    changes = 0
+
+    # 1. Sync shared docs & license
+    for doc in ["CLAUDE.md", "CONTEXT.md", "LICENSE"]:
+        if copy_file_if_changed(UPSTREAM_ROOT / doc, target_repo / doc):
+            changes += 1
+
+    # 2. Sync hooks
+    claude_hooks_dst = target_repo / ".claude" / "hooks"
+    for hook_file in ["security_gate_hook.sh", "security_gate_hook_semgrep.sh"]:
+        src = UPSTREAM_ROOT / ".agents" / hook_file
+        dst = claude_hooks_dst / hook_file
+        if copy_file_if_changed(src, dst):
+            changes += 1
+
+    changes += copy_tree_sync(UPSTREAM_ROOT / ".agents" / "lib", claude_hooks_dst / "lib")
+    changes += copy_tree_sync(UPSTREAM_ROOT / ".agents" / "tests", claude_hooks_dst / "tests")
+
+    # 3. Sync skills (transforming to kebab-case)
+    upstream_skills = UPSTREAM_ROOT / ".agents" / "skills"
+    claude_skills_dst = target_repo / ".claude" / "skills"
+
+    if upstream_skills.exists():
+        for skill_folder in upstream_skills.iterdir():
+            if not skill_folder.is_dir():
+                continue
+            kebab_name = to_kebab_case(skill_folder.name)
+            target_skill_dir = claude_skills_dst / kebab_name
+            target_skill_dir.mkdir(parents=True, exist_ok=True)
+
+            # Copy skill contents
+            for root, dirs, files in os.walk(skill_folder):
+                rel = Path(root).relative_to(skill_folder)
+                dest_sub = target_skill_dir / rel
+                dest_sub.mkdir(parents=True, exist_ok=True)
+                for f in files:
+                    s_file = Path(root) / f
+                    d_file = dest_sub / f
+                    if f == "SKILL.md":
+                        # Adjust frontmatter name to kebab-case
+                        content = s_file.read_text(encoding="utf-8")
+                        content = re.sub(r"^name:\s*[\w-]+", f"name: {kebab_name}", content, flags=re.MULTILINE)
+                        if not d_file.exists() or d_file.read_text(encoding="utf-8") != content:
+                            d_file.write_text(content, encoding="utf-8")
+                            changes += 1
+                    else:
+                        if copy_file_if_changed(s_file, d_file):
+                            changes += 1
+
+    print(f"  -> Claude Code sync complete ({changes} files updated).")
+    return changes
+
+
+def git_commit_and_push(repo_dir: Path, upstream_sha: str, auto_commit: bool, auto_push: bool):
+    if not (repo_dir / ".git").exists():
+        return
+
+    status = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    )
+    if not status.stdout.strip():
+        print(f"  [git] No changes to commit in {repo_dir.name}.")
+        return
+
+    print(f"  [git] Detected changes in {repo_dir.name}:")
+    for line in status.stdout.strip().splitlines()[:5]:
+        print(f"    {line}")
+
+    if auto_commit:
+        subprocess.run(["git", "add", "-A"], cwd=repo_dir, check=True)
+        commit_msg = f"sync: Update skills and hooks from upstream ({upstream_sha})"
+        subprocess.run(["git", "commit", "-m", commit_msg], cwd=repo_dir, check=True)
+        print(f"  [git] Created commit in {repo_dir.name}: '{commit_msg}'")
+
+        if auto_push:
+            print(f"  [git] Pushing {repo_dir.name} to remote...")
+            subprocess.run(["git", "push"], cwd=repo_dir, check=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Synchronize skills and hooks to downstream repos.")
+    parser.add_argument(
+        "--antigravity-dir",
+        type=Path,
+        default=Path(os.getenv("ANTIGRAVITY_REPO_DIR", UPSTREAM_ROOT.parent / "secure-tdd-antigravity")),
+        help="Path to the Antigravity downstream repository.",
+    )
+    parser.add_argument(
+        "--claude-dir",
+        type=Path,
+        default=Path(os.getenv("CLAUDE_CODE_REPO_DIR", UPSTREAM_ROOT.parent / "secure-tdd-claude-code")),
+        help="Path to the Claude Code downstream repository.",
+    )
+    parser.add_argument(
+        "--commit",
+        action="store_true",
+        help="Automatically commit changes in downstream repositories.",
+    )
+    parser.add_argument(
+        "--push",
+        action="store_true",
+        help="Automatically push downstream repository commits to remote.",
+    )
+
+    args = parser.parse_args()
+    upstream_sha = get_git_sha(UPSTREAM_ROOT)
+
+    print("=========================================================")
+    print(f" Secure TDD Downstream Sync (Upstream SHA: {upstream_sha})")
+    print("=========================================================")
+
+    ag_changes = sync_antigravity(args.antigravity_dir)
+    cl_changes = sync_claude_code(args.claude_dir)
+
+    if args.commit:
+        if ag_changes > 0 or (args.antigravity_dir / ".git").exists():
+            git_commit_and_push(args.antigravity_dir, upstream_sha, args.commit, args.push)
+        if cl_changes > 0 or (args.claude_dir / ".git").exists():
+            git_commit_and_push(args.claude_dir, upstream_sha, args.commit, args.push)
+
+    print("\nAll downstream repositories are up to date!")
+
+
+if __name__ == "__main__":
+    main()

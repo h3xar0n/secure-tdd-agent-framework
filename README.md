@@ -43,15 +43,18 @@ Similarly, AI coding agents without structured QA guardrails frequently write un
 
 ## 2. Inspiration & Extensible Design Philosophy
 
-This framework was inspired by research into agentic reasoning and specialized skill architectures, including [Google's Mantis project](https://github.com/google/mantis).
+This framework brings together two foundational inspirations:
+1. **Test-Driven Development & Continuous Verification**: Drawing on the engineering discipline of TDD and **Paul Hammond's** pioneering work on automated testing and continuous deployment (where rapid feedback loops, high verification confidence, and test-first design enable developers to ship reliably and move fast).
+2. **Modular Agent Skill Architectures**: Inspired by research into agentic reasoning and specialized skill structures, including [Google's Mantis project](https://github.com/google/mantis).
 
-While dedicated security auditing tools focus on deep batch sweeps, exploit reproduction, and exploit chaining across legacy repositories, **developers need a lightweight, modular system that integrates directly into everyday feature development and QA workflows**.
+While dedicated security review tools often focus on deep offline batch audits and exploit reproduction across legacy repositories, **developers need a lightweight, modular system that integrates directly into everyday feature development and QA workflows**.
 
 ### Key Design Principles:
 1. **Developer Inner-Loop Integration**: Plugs directly into everyday development tools (`git`, `pytest`, `unittest`, local linters) without requiring heavyweight infrastructure or out-of-band audit cycles.
 2. **Modular & Extensible Skills**: Skills are loosely coupled and self-contained in standard `SKILL.md` packages. Developers can freely adopt, customize, or extend whichever skills suit their project (e.g. adding custom domain linters, specialized QA runbooks, or tailored threat models).
 3. **Multi-Agent Portability**: Built on open agent skill standards (standard YAML frontmatter and Markdown), allowing identical skills to run seamlessly across **Antigravity (Jetski)**, **Claude Code**, and other coding assistants.
-4. **Zero-Database Transparency**: All architectural state and security context live directly alongside the code in human-readable Markdown (`CONTEXT.md`, `threat_model.md`) and append-only logs (`.security-gate/`). 
+4. **Zero-Database Transparency**: All architectural state and security context live directly alongside the code in human-readable Markdown (`CONTEXT.md`, `threat_model.md`) and append-only logs (`.security-gate/`).
+ 
 
 
 ---

@@ -18,7 +18,14 @@ When security and QA reviews happen **only** downstream in CI/CD or post-merge p
 - **Context-Switching Tax**: Fixing a failure detected in CI requires rolling back branches, reopening pull requests, and context switching away from current feature work.
 - **Compounding Technical Debt**: AI coding agents without local QA guardrails generate unchecked assumptions and subtle logic bypasses that escape into the codebase.
 
+### Security as Part of Software Quality (and the Stability Risk of Isolation)
+A core philosophical pillar of this framework is that **security is not an isolated specialty or an afterthought—it is an intrinsic dimension of software quality**:
+
+- **Isolated Security Threatens Stability**: When security is treated in isolation from functional development, it actively poses a risk to system stability. Out-of-band security scans, external remediation workflows, or isolated security patches frequently introduce regressions, break existing API contracts, and cause unexpected production outages because they modify code without full context of the application's functional requirements.
+- **Co-Verification via TDD**: A security patch that breaks functional behavior is not a fix—it is a regression. By unifying security constraints with Test-Driven Development (TDD), every defensive boundary (authentication, input allow-lists, parameterized sinks) is codified into tests alongside functional acceptance criteria (happy paths, business workflows). This ensures patches preserve both security *and* operational stability simultaneously.
+
 **The Inner-Loop Advantage**: By moving threat modeling and security test assertions into the developer's local test-first loop (TDD), issues are caught and eliminated in seconds while the code is actively being written.
+
 
 ```
        +------------------------------------------------------------------+

@@ -57,7 +57,7 @@ While dedicated security review tools often focus on deep offline batch audits a
 ### Key Design Principles:
 1. **Developer Inner-Loop Integration**: Plugs directly into everyday development tools (`git`, `pytest`, `unittest`, local linters) without requiring heavyweight infrastructure or out-of-band audit cycles.
 2. **Modular & Extensible Skills**: Skills are loosely coupled and self-contained in standard `SKILL.md` packages. Developers can freely adopt, customize, or extend whichever skills suit their project (e.g. adding custom domain linters, specialized QA runbooks, or tailored threat models).
-3. **Multi-Agent Portability**: Built on open agent skill standards (standard YAML frontmatter and Markdown), allowing identical skills to run seamlessly across **Antigravity (Jetski)**, **Claude Code**, and other coding assistants.
+3. **Multi-Agent Portability**: Built on open agent skill standards (standard YAML frontmatter and Markdown), allowing identical skills to run seamlessly across **Antigravity**, **Claude Code**, and other coding assistants.
 4. **Zero-Database Transparency**: All architectural state and security context live directly alongside the code in human-readable Markdown (`CONTEXT.md`, `threat_model.md`) and append-only logs (`.security-gate/`).
  
 
@@ -180,7 +180,7 @@ secure-tdd-agent-framework/ (Canonical Upstream Source of Truth)
 ```
 
 ### Downstream Distribution Repositories:
-- **`secure-tdd-antigravity`**: Dedicated Antigravity / Jetski workspace package containing `.agents/`, `AGENTS.md`, and `CONTEXT.md`.
+- **`secure-tdd-antigravity`**: Dedicated Antigravity workspace package containing `.agents/`, `AGENTS.md`, and `CONTEXT.md`.
 - **`secure-tdd-claude-code`**: Dedicated Claude Code CLI package containing `.claude/` (with kebab-case skills and bash hooks), `CLAUDE.md`, and `CONTEXT.md`.
 
 ### Platform Rule & Workflow Mapping
@@ -188,10 +188,11 @@ Different AI coding platforms discover always-on instructions through different 
 
 | Platform | Rule / Workflow Location | Purpose & Discovery Mechanism |
 | :--- | :--- | :--- |
-| **Antigravity (Jetski)** | `.agents/rules/secure_tdd_workflow.md` | Auto-discovered by Jetski from `.agents/rules/` with `trigger: always_on`. |
+| **Antigravity** | `.agents/rules/secure_tdd_workflow.md` | Auto-discovered from `.agents/rules/` with `trigger: always_on`. |
 | **Claude Code** | `CLAUDE.md` (Project Root) | Auto-loaded by Claude Code on session start as the project system prompt. |
 | **Universal Agents** | `AGENTS.md` (Project Root) | Universal reference document for any AI coding assistant or developer. |
 | **Shared Context** | `CONTEXT.md` & `threat_model.md` | Living architectural boundaries, helpers, and STRIDE acceptance criteria. |
+
 
 
 ---

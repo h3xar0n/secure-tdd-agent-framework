@@ -179,6 +179,17 @@ secure-tdd-agent-framework/ (Canonical Upstream Source of Truth)
 - **`secure-tdd-antigravity`**: Dedicated Antigravity / Jetski workspace package containing `.agents/`, `AGENTS.md`, and `CONTEXT.md`.
 - **`secure-tdd-claude-code`**: Dedicated Claude Code CLI package containing `.claude/` (with kebab-case skills and bash hooks), `CLAUDE.md`, and `CONTEXT.md`.
 
+### Platform Rule & Workflow Mapping
+Different AI coding platforms discover always-on instructions through different file locations. The canonical upstream repository maintains each format, and `sync_downstream.py` distributes them cleanly to their native locations:
+
+| Platform | Rule / Workflow Location | Purpose & Discovery Mechanism |
+| :--- | :--- | :--- |
+| **Antigravity (Jetski)** | `.agents/rules/secure_tdd_workflow.md` | Auto-discovered by Jetski from `.agents/rules/` with `trigger: always_on`. |
+| **Claude Code** | `CLAUDE.md` (Project Root) | Auto-loaded by Claude Code on session start as the project system prompt. |
+| **Universal Agents** | `AGENTS.md` (Project Root) | Universal reference document for any AI coding assistant or developer. |
+| **Shared Context** | `CONTEXT.md` & `threat_model.md` | Living architectural boundaries, helpers, and STRIDE acceptance criteria. |
+
+
 ---
 
 ## 5. Automated Downstream Synchronization

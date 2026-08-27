@@ -41,44 +41,18 @@ Similarly, AI coding agents without structured QA guardrails frequently write un
 
 ---
 
-## 2. Architecture Comparison: `secure-coding-agy-config` vs `google/mantis` vs Secure TDD
+## 2. Inspiration & Extensible Design Philosophy
 
-```mermaid
-flowchart TD
-    subgraph Mantis ["Google Mantis (Offensive Batch Review)"]
-        direction TB
-        M_In["Legacy Repo Snapshot"] --> M_Arch["KB Architecture"]
-        M_Arch --> M_TM["Living Threat Model"]
-        M_TM --> M_Sweep["Multi-Thread Researcher"]
-        M_Sweep --> M_Crit["Adversarial Critic"]
-        M_Crit --> M_PoC["Crash Reproducers (gVisor)"]
-        M_PoC --> M_Chain["Exploit Chaining"]
-        M_Chain --> M_Rpt["Vulnerability Packet"]
-    end
+This framework was inspired by research into agentic reasoning and specialized skill architectures, including [Google's Mantis project](https://github.com/google/mantis).
 
-    subgraph SecureTDD ["Secure TDD Framework (Developer QA & Inner-Loop)"]
-        direction TB
-        DevReq(["Feature Request / Bug"]) --> S_Plan["Phase A: Plan & STRIDE Threat Model (threat_model.md)"]
-        S_Plan --> S_Red["Phase B: Functional + Security Tests (RED - pytest/unittest)"]
-        S_Red --> S_Green["Phase C: Defensive Implementation (GREEN - Minimal MVP)"]
-        S_Green --> S_Refactor["Phase D: Local QA, Scan & Review (REFACTOR)"]
-        S_Refactor --> S_Evolve["Continuous Evolution (Update CONTEXT.md / SKILL.md)"]
-        S_Evolve -.->|"Context Seeding"| S_Plan
-        S_Refactor --> S_Push["Deterministic Pre-Push Gate (Semgrep / cm)"]
-    end
-```
+While dedicated security auditing tools focus on deep batch sweeps, exploit reproduction, and exploit chaining across legacy repositories, **developers need a lightweight, modular system that integrates directly into everyday feature development and QA workflows**.
 
-### Mantis Skills Triage for Developer QA Workflows
+### Key Design Principles:
+1. **Developer Inner-Loop Integration**: Plugs directly into everyday development tools (`git`, `pytest`, `unittest`, local linters) without requiring heavyweight infrastructure or out-of-band audit cycles.
+2. **Modular & Extensible Skills**: Skills are loosely coupled and self-contained in standard `SKILL.md` packages. Developers can freely adopt, customize, or extend whichever skills suit their project (e.g. adding custom domain linters, specialized QA runbooks, or tailored threat models).
+3. **Multi-Agent Portability**: Built on open agent skill standards (standard YAML frontmatter and Markdown), allowing identical skills to run seamlessly across **Antigravity (Jetski)**, **Claude Code**, and other coding assistants.
+4. **Zero-Database Transparency**: All architectural state and security context live directly alongside the code in human-readable Markdown (`CONTEXT.md`, `threat_model.md`) and append-only logs (`.security-gate/`). 
 
-| Mantis Skill (Batch Review) | Adapted Secure TDD Skill (Developer QA Focus) | Role in Developer Velocity & Quality |
-| :--- | :--- | :--- |
-| `mantis-threat-model` + `mantis-plan` | **Phase A: Threat Model Assessor** | Analyzes feature requirements and evaluates STRIDE boundaries before code is authored. |
-| `mantis-reproduce` | **Phase B: Security & QA Test Writer (RED)** | Translates user requirements and edge-case exploits into native unit/integration tests. |
-| `mantis-patch` + `mantis-review` | **Phase C: Defensive Developer (GREEN)** | Implements clean, maintainable logic satisfying both functional requirements and defensive constraints. |
-| `mantis-critic` + Deterministic SAST | **Phase D: Local Refactor & Scanner** | Verifies code quality, runs full regression tests, and executes fast local SAST / secret checks. |
-| `mantis-reflect` | **Continuous Evolution: Skill Updater** | Extracts systemic quality and security conventions into `CONTEXT.md` and `SKILL.md`. |
-| `mantis-history` | **History Context Seeder** | Mines VCS history during repository onboarding to seed `CONTEXT.md` with past bug and fix patterns. |
-| *`mantis-chain`, `mantis-calibrate`, `mantis-report`* | **EXCLUDED** | Dropped to maintain instant developer feedback and eliminate review latency. |
 
 ---
 

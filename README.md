@@ -161,6 +161,56 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
   3. *Update Local Context (`CONTEXT.md`)*: Extract systemic lessons, approved helpers, and newly established conventions, appending them directly to `CONTEXT.md` under `## 4. Continuous Evolution: Auto-Evolved Conventions`.
   4. *Evolve & Suggest Skill Updates (`SKILL.md`)*: If a recurring anti-pattern, tricky edge case, or specialized QA/security workflow was identified, suggest or apply updates to `SKILL.md` instructions so future AI agent sessions inherit the rule upfront and avoid repeating the mistake.
 
+##### Security Gate Hook Flow (Pre-Push Gate)
+
+```
+                 [ git push intercepted by Hook ]
+                                │
+                                ▼
+                  [ Inspect Changed Files ]
+                                │
+                 ┌──────────────┴──────────────┐
+           (No changes)                   (Files changed)
+                 │                             │
+                 ▼                             ▼
+           [ Allow Push ]             [ Route to Engine ]
+                                     (CodeMender / Semgrep)
+                                               │
+                                               ▼
+                                      [ Run Local Scan ]
+                                               │
+                      ┌────────────────────────┼────────────────────────┐
+                (Scan Error)              (No Findings)           (Findings Present)
+                      │                        │                        │
+                      ▼                        ▼                        ▼
+              [ Check Fail-Open ]        [ Allow Push ]       [ Rank Finding Severity ]
+         SECURITY_GATE_ALLOW_ON_ERROR               (CRITICAL/HIGH vs MEDIUM/LOW)
+                      │                                                 │
+               ┌──────┴──────┐                               ┌──────────┴──────────┐
+            (true)        (false)                       (Advisory)              (Blocking)
+               │             │                               │                      │
+               ▼             ▼                               ▼                      │
+         [ Allow Push ] [ Deny Push ]                  [ Log Advisory ]             │
+                                                       [  Allow Push  ]             │
+                                                                                    │
+                                  ┌─────────────────────────────────────────────────┘
+                                  │
+                   ┌──────────────┴──────────────┐
+              [ CodeMender ]                [ Semgrep ]
+                   │                             │
+                   ▼                             ▼
+          [ Attempt Auto-Fix ]            [ Format Findings ]
+        & Run Regression Tests            [    Deny Push    ]
+                   │
+        ┌──────────┴──────────┐
+     (Tests Pass &         (Tests Fail /
+      Small Diff)           Large Diff)
+        │                     │
+        ▼                     ▼
+  [ Auto-Commit ]       [ Escalate / ]
+  [ Allow Push  ]       [ Deny Push  ]
+```
+
 
 ---
 

@@ -233,6 +233,70 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
 > 5. **Detailed Commit Documentation**: Auto-commits include structured commit bodies detailing why the security test was added, the threat model boundary addressed, the fix implemented, and test passing confirmation.
 > 6. **Local Context & Skill Evolution**: When enabled, the hook appends newly verified conventions directly to the directory-level `CONTEXT.md` and outputs actionable suggestions for updating relevant `SKILL.md` files so future agent sessions avoid repeating the issue.
 
+### Optional Scanner Engines & Installation
+
+The security gate hook supports modular scanning engines. Both scanners are **optional**:
+- **Automatic Engine Detection**: The hook checks which tools are available on your system `PATH`.
+- **Graceful Execution**: If `semgrep` is not installed, the pipeline skips Stage 1 and proceeds directly to Stage 2 (`cm`). If neither scanner is installed, the hook logs an informational notice and allows the push to proceed normally.
+- **Designed for Extension**: The engine architecture in `.agents/lib/` is structured so teams can integrate alternative scanners down the road (such as Wiz Code or Semgrep Pro for Stage 1, or custom verification engines for Stage 2).
+
+#### 1. Semgrep (Stage 1: Open-Source Deterministic AST Scanner)
+Semgrep runs fast local pattern checks against open-source rules without sending code off your machine.
+
+**Installation**:
+```bash
+# Via Homebrew (macOS / Linux):
+brew install semgrep
+
+# Or via pip:
+pip install semgrep
+
+# Verify installation:
+semgrep --version
+```
+
+#### 2. CodeMender CLI (`cm` - Stage 2: Semantic Analysis & Remediation)
+CodeMender provides semantic code analysis and multi-file contextual auto-remediation.
+
+**Installation & Setup**:
+1. Authenticate with Google Cloud:
+   ```bash
+   gcloud auth application-default login
+   ```
+2. Download the `cm` binary for your platform:
+   ```bash
+   # For macOS (Apple Silicon / ARM64):
+   gcloud artifacts generic download \
+       --project=cmoc-prod \
+       --location=us \
+       --repository=codemender-cli-production \
+       --package=cm \
+       --version=stable \
+       --name=cm-darwin-arm64.zip \
+       --destination=./
+
+   # For Linux (x86_64):
+   gcloud artifacts generic download \
+       --project=cmoc-prod \
+       --location=us \
+       --repository=codemender-cli-production \
+       --package=cm \
+       --version=stable \
+       --name=cm-linux-amd64.zip \
+       --destination=./
+   ```
+3. Extract and place on `PATH`:
+   ```bash
+   unzip cm-*.zip
+   chmod +x cm
+   sudo mv cm /usr/local/bin/cm
+   cm --help
+   ```
+4. Initialize your project:
+   ```bash
+   cm init
+   cm init --verify
+   ```
 
 ---
 
@@ -371,7 +435,7 @@ bash .agents/tests/run_tests.sh
 # Test Claude Code Hook (in downstream repo)
 bash ../secure-tdd-claude-code/.claude/hooks/tests/run_tests.sh
 ```
-*Output: 74/74 mock tests passing (37 per test harness) across PASS, ADVISORY, ERROR, BLOCKED, FIXED, and PIPELINE outcomes.*
+*Output: 76/76 mock tests passing (38 per test harness) across PASS, ADVISORY, ERROR, BLOCKED, FIXED, and PIPELINE outcomes.*
 
 
 ---

@@ -1,19 +1,43 @@
 # Secure Test-Driven Development (Secure TDD) Agent Framework
 
-> **A lightweight, proactive security orchestration framework for AI coding agents and solo developers.** Built around Test-Driven Development (TDD), living STRIDE threat modeling, local deterministic guardrails, and continuous skill self-evolution.
+> **A comprehensive Test-Driven Development (TDD) and Quality Assurance (QA) framework with integrated security guardrails for AI coding agents and developers.** Unites functional test-first engineering, living STRIDE threat modeling, local deterministic code quality checks, and continuous skill self-evolution.
 
 ---
 
-## 1. Executive Summary & Paradigm Shift
+## 1. Executive Summary & Philosophy: Security as Part of QA
 
-Traditional security models rely on post-merge CI/CD pipelines, causing a high "verification tax", delayed feedback loops (20–70 days to patch), and developer fatigue. Similarly, low-context AI coding agents generate large, unreviewable diffs with contextual naivety and subtle security flaws.
+Test-Driven Development (TDD) is the cornerstone of robust **Quality Assurance (QA)**: it guarantees functional correctness, documents expected behavior, handles edge cases, and prevents regressions. 
 
-**Frontline Agentic Security** resolves these bottlenecks by shifting security directly into the AI coding agent's inner-loop:
-1. **Proactive Boundary Enforcement**: Architectural boundaries and STRIDE threat models are generated *before* any production code is authored.
-2. **Security Test-First (RED)**: Boundary constraints are codified into executable tests asserting HTTP 400/401/403 status codes and input validation rejections.
-3. **Defensive Implementation (GREEN)**: Minimal defensive logic satisfies the assertions using allow-lists, parameterized queries, and least privilege.
-4. **No Heavy Database Required**: All state is managed via plain Markdown (`CONTEXT.md`, `threat_model.md`) and append-only logs (`.security-gate/`).
-5. **Continuous Skill Evolution**: When a bug or new pattern is resolved, the agent extracts the systemic lesson and dynamically updates `CONTEXT.md` and `SKILL.md` so the mistake is never repeated.
+Historically, software engineering has often treated **functional QA** and **security testing** as completely separate disciplines:
+- **QA** runs during development and CI to verify business logic, user journeys, and regressions.
+- **Security** is siloed into delayed post-merge scans or third-party audits (leading to 20–70 day remediation cycles and high context-switching costs).
+
+Similarly, AI coding agents without structured QA guardrails frequently write unverified code with fragile edge cases and subtle security holes.
+
+```
+       +------------------------------------------------------------------+
+       |                  HOLISTIC QUALITY ASSURANCE (QA)                 |
+       |                                                                  |
+       |   +--------------------------+    +--------------------------+   |
+       |   |      FUNCTIONAL QA       |    |       SECURITY QA        |   |
+       |   | - Happy paths            |    | - Input allow-lists      |   |
+       |   | - Business logic rules   | +  | - Auth & access control  |   |
+       |   | - Boundary & edge cases  |    | - Safe sinks & params    |   |
+       |   | - Regression protection  |    | - Injection prevention   |   |
+       |   +--------------------------+    +--------------------------+   |
+       +---------------------------------+--------------------------------+
+                                         |
+                                         v
+                         [ Unified TDD Inner-Loop: RED -> GREEN -> REFACTOR ]
+```
+
+**Secure TDD brings security into everyday QA and TDD workflows:**
+1. **Holistic Planning & Threat Modeling**: Features are planned with both functional user stories and STRIDE boundary constraints *before* code is authored.
+2. **Comprehensive Test-First (RED)**: Unit and integration tests assert both functional outcomes (HTTP 200/302, correct payloads) and defensive boundaries (HTTP 400/401/403, input validation rejections).
+3. **Clean, Defensive Implementation (GREEN)**: Minimal, maintainable production code satisfies functional specifications while using safe design patterns (allow-lists, parameterized queries, least privilege).
+4. **Local Refactoring & Deterministic Scanning (REFACTOR)**: Fast local checks (linting, test suite regression passes, secret detection, Semgrep SAST) ensure high code quality before commits.
+5. **Continuous Quality & Security Evolution**: When edge cases, bugs, or security patterns are resolved, the framework captures the lesson into `CONTEXT.md` and `SKILL.md` so the entire team and agent fleet learn permanently.
+6. **No Heavy Database Required**: All state is managed transparently via plain Markdown (`CONTEXT.md`, `threat_model.md`) and append-only logs (`.security-gate/`).
 
 ---
 
@@ -32,28 +56,28 @@ flowchart TD
         M_Chain --> M_Rpt["Vulnerability Packet"]
     end
 
-    subgraph SecureTDD ["Secure TDD Framework (Frontline Developer Inner-Loop)"]
+    subgraph SecureTDD ["Secure TDD Framework (Developer QA & Inner-Loop)"]
         direction TB
         DevReq(["Feature Request / Bug"]) --> S_Plan["Phase A: Plan & STRIDE Threat Model (threat_model.md)"]
-        S_Plan --> S_Red["Phase B: Security Tests (RED - pytest/unittest)"]
-        S_Red --> S_Green["Phase C: Defensive Code (GREEN - Minimal MVP)"]
-        S_Green --> S_Refactor["Phase D: Local Scan & Guided Review (REFACTOR)"]
+        S_Plan --> S_Red["Phase B: Functional + Security Tests (RED - pytest/unittest)"]
+        S_Red --> S_Green["Phase C: Defensive Implementation (GREEN - Minimal MVP)"]
+        S_Green --> S_Refactor["Phase D: Local QA, Scan & Review (REFACTOR)"]
         S_Refactor --> S_Evolve["Continuous Evolution (Update CONTEXT.md / SKILL.md)"]
         S_Evolve -.->|"Context Seeding"| S_Plan
         S_Refactor --> S_Push["Deterministic Pre-Push Gate (Semgrep / cm)"]
     end
 ```
 
-### Mantis Skills Triage for Developer Workflows
+### Mantis Skills Triage for Developer QA Workflows
 
-| Mantis Skill (Review Focus) | Adapted Secure TDD Skill (Dev Focus) | Role in Developer Velocity |
+| Mantis Skill (Batch Review) | Adapted Secure TDD Skill (Developer QA Focus) | Role in Developer Velocity & Quality |
 | :--- | :--- | :--- |
-| `mantis-threat-model` + `mantis-plan` | **Phase A: Threat Model Assessor** | Evaluates feature scope against STRIDE before code is written, creating `threat_model.md`. |
-| `mantis-reproduce` | **Phase B: Security Test Writer (RED)** | Translates exploit reproduction into native unit/integration tests added to the test suite. |
-| `mantis-patch` + `mantis-review` | **Phase C: Defensive Developer (GREEN)** | Implements minimal defensive logic (allow-lists, parameterized sinks) satisfying the tests. |
-| `mantis-critic` + Deterministic SAST | **Phase D: Local Refactor & Scanner** | Fast, local diff checks (secrets, dependencies, Semgrep) + guided AI review before commit. |
-| `mantis-reflect` | **Continuous Evolution: Skill Updater** | Extracts systemic lessons from fixes and updates `CONTEXT.md` / `SKILL.md` specs. |
-| `mantis-history` | **History Context Seeder** | Mines VCS history during repository onboarding to seed `CONTEXT.md` with past lessons. |
+| `mantis-threat-model` + `mantis-plan` | **Phase A: Threat Model Assessor** | Analyzes feature requirements and evaluates STRIDE boundaries before code is authored. |
+| `mantis-reproduce` | **Phase B: Security & QA Test Writer (RED)** | Translates user requirements and edge-case exploits into native unit/integration tests. |
+| `mantis-patch` + `mantis-review` | **Phase C: Defensive Developer (GREEN)** | Implements clean, maintainable logic satisfying both functional requirements and defensive constraints. |
+| `mantis-critic` + Deterministic SAST | **Phase D: Local Refactor & Scanner** | Verifies code quality, runs full regression tests, and executes fast local SAST / secret checks. |
+| `mantis-reflect` | **Continuous Evolution: Skill Updater** | Extracts systemic quality and security conventions into `CONTEXT.md` and `SKILL.md`. |
+| `mantis-history` | **History Context Seeder** | Mines VCS history during repository onboarding to seed `CONTEXT.md` with past bug and fix patterns. |
 | *`mantis-chain`, `mantis-calibrate`, `mantis-report`* | **EXCLUDED** | Dropped to maintain instant developer feedback and eliminate review latency. |
 
 ---
@@ -61,79 +85,85 @@ flowchart TD
 ## 3. The Secure TDD Inner-Loop
 
 ```
-                 +---------------------------+
-                 |       PLAN & RED          |
-                 |  - Ingest CONTEXT.md      |
-                 |  - STRIDE Threat Model    |
-                 |  - Security Tests (Red)   |
-                 +-------------+-------------+
-                               |
-                               v
-                 +---------------------------+
-                 |         GREEN             |
-                 |  - Defensive Code (MVP)   |
-                 |  - Satisfy Red Tests      |
-                 +-------------+-------------+
-                               |
-                               v
-                 +---------------------------+
-                 |     REFACTOR & SECURE     |
-                 |  - Local Scans & Audits   |
-                 |  - Surgical Small Diffs   |
-                 |  - Evolve Skills/Specs    |
-                 +-------------+-------------+
-                               |
-                               +--- Continuous Evolution ---+
+                 +-----------------------------------------+
+                 |               PLAN & RED                |
+                 |  - Ingest CONTEXT.md                    |
+                 |  - Functional Specs & STRIDE Model      |
+                 |  - Functional + Security Tests (RED)    |
+                 +--------------------+--------------------+
+                                      |
+                                      v
+                 +-----------------------------------------+
+                 |                 GREEN                   |
+                 |  - Clean, Defensive Code (MVP)          |
+                 |  - Satisfy All Functional & Red Tests   |
+                 +--------------------+--------------------+
+                                      |
+                                      v
+                 +-----------------------------------------+
+                 |            REFACTOR & SECURE            |
+                 |  - Code Quality & Regression Tests      |
+                 |  - Local Scans & Guided Review          |
+                 |  - Evolve Skills & Architectural Specs  |
+                 +--------------------+--------------------+
+                                      |
+                                      +--- Continuous Evolution ---+
 ```
 
 ### Phase-by-Phase Breakdown
 
-#### Phase A: Proactive Planning & Threat Modeling (Plan Phase)
+#### Phase A: Planning, Functional Scoping & Threat Modeling (Plan Phase)
 - **Core Skill**: `threat_model_assessor`
-- Ingests `CONTEXT.md` to identify existing trust boundaries and approved helpers.
-- Performs STRIDE evaluation (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege).
-- Generates/updates `threat_model.md` at the workspace root, defining Security Acceptance Criteria.
+- Ingests `CONTEXT.md` to identify existing trust boundaries, data flows, and approved helpers.
+- Decomposes the feature into clear functional deliverables and evaluates STRIDE risks (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege).
+- Generates or updates `threat_model.md` at the workspace root, establishing both Functional and Security Acceptance Criteria.
 
-#### Phase B: Security Test-First Case Creation (Red Phase)
+#### Phase B: Functional & Security Test-First Case Creation (Red Phase)
 - **Core Skill**: `security_test_writer`
-- Applies three verification pillars:
-  1. *Behavior-driven outcomes*: Assert strictly on HTTP status codes (400, 401, 403) and responses.
+- Authors comprehensive test cases covering:
+  1. *Functional Acceptance*: Happy paths, business logic workflows, valid outputs (e.g. HTTP 200/302).
+  2. *Edge Cases & Error Handling*: Malformed inputs, missing parameters, out-of-range values.
+  3. *Security Boundary Enforcement*: Rejecting unauthenticated requests, unauthorized access, path traversal, injection payloads (e.g. HTTP 400/401/403).
+- Adheres to the Three Verification Pillars:
+  1. *Behavior-driven HTTP/API outcomes*: Assert strictly on observable contracts and status codes.
   2. *Strict test isolation*: Fresh contexts and transaction rollbacks.
   3. *Integration over fragile mocking*: Local test instances instead of superficial fakes.
-- Verifies that tests fail for the expected security constraint (RED).
+- Runs the test suite and confirms tests fail for the expected reason (**RED**).
 
-#### Phase C: Secure Defensive Implementation (Green Phase)
+#### Phase C: Clean Defensive Implementation (Green Phase)
 - **Core Skill**: `defensive_developer`
-- Implements the absolute minimum defensive logic to pass tests:
-  1. *Simple input validation*: Strict allow-lists, typed schemas (`pydantic`).
-  2. *Explicit authorization*: Validating caller identity before route execution.
-  3. *Least privilege*: Returning minimal payload attributes and parameterizing SQL/commands.
-- Confirms all tests pass (GREEN).
+- Authors the minimal, high-quality production code required to satisfy all failing tests.
+- Adheres to the Three Defensive Pillars:
+  1. *Strict input validation*: Type safety, structured schemas (`pydantic`), and allow-lists over fragile regex.
+  2. *Explicit authorization*: Caller identity and permission verification before executing logic.
+  3. *Least privilege & safe sinks*: Parameterized queries, canonical path checking, and minimal returned data payloads.
+- Re-runs the test suite to confirm everything is passing (**GREEN**).
 
-#### Phase D: Local Refactoring & Scanning (Refactor Phase)
+#### Phase D: Local Refactoring, Quality & Scanning (Refactor Phase)
 - **Core Skill**: `local_refactor_scanner`
-- Fast deterministic scans on the diff (secrets, dependency CVEs, local Semgrep).
-- Guided AI review for design flaws, logic bypasses, and dead code.
-- Ensures small, surgical diffs and zero regressions across the test suite.
+- Runs code cleanup for readability, maintainability, and efficiency while ensuring zero test regressions.
+- Executes fast deterministic checks on changed files (secrets, dependency vulnerabilities, local Semgrep SAST).
+- Conducts a guided AI review to verify architectural boundaries and eliminate logic flaws.
+- Keeps diffs small, surgical, and baseline-stable.
 
 #### Continuous Evolution: Updating Skills & Context
 - **Core Skill**: `skill_evolution_updater`
-- Extracts the systemic rule from newly applied fixes (e.g., *"Always use `utils.security.safe_redirect()`"*).
-- Automatically appends new conventions to `CONTEXT.md` and refines `SKILL.md` prompt instructions.
+- Extracts systemic rules from resolved bugs and newly introduced helpers (e.g., *"Always use `utils.security.safe_redirect()` for URL redirects"*).
+- Appends rules to `CONTEXT.md` under `## 4. Continuous Evolution: Auto-Evolved Conventions` and updates `SKILL.md` prompts so all future agent sessions inherit the knowledge.
 
 ---
 
 ## 4. Repository Structure & Multi-Agent Compatibility
 
-The repository is organized to support **Antigravity**, **Claude Code**, and **Universal Agents** simultaneously:
+The repository is organized to support **Antigravity**, **Claude Code**, and **Universal AI Agents** simultaneously:
 
 ```none
 secure-tdd-agent-framework/
-├── CONTEXT.md                         # Living project context, boundaries & evolved rules
-├── threat_model.md                    # Living STRIDE threat model artifact
+├── CONTEXT.md                         # Living project context, boundaries & evolved conventions
+├── threat_model.md                    # Living STRIDE threat model & acceptance criteria
 ├── AGENTS.md                          # Universal agent guidelines & inner-loop spec
 ├── CLAUDE.md                          # Claude Code always-on workflow instructions
-├── requirements.txt                   # Framework dependencies
+├── requirements.txt                   # Framework dependencies (Flask, pytest, semgrep, pydantic)
 ├── .agents/                           # Antigravity Workspace Config (Auto-discovered)
 │   ├── rules/
 │   │   └── secure_tdd_workflow.md    # Always-on workflow rule (Plan -> Red -> Green -> Refactor)
@@ -156,10 +186,10 @@ secure-tdd-agent-framework/
 │       ├── hooks/                     # PreToolUse bash push interceptors
 │       └── skills/                    # Kebab-case Claude Code skills
 ├── sample_app/                        # Sample application demonstrating Secure TDD
-│   ├── app.py                         # Flask service with defensive endpoints
+│   ├── app.py                         # Flask service with functional & defensive endpoints
 │   └── utils/security.py              # Approved security helpers (paths, redirects, SQL)
 └── tests/
-    └── test_sample_app.py             # Integration test suite asserting security boundaries
+    └── test_sample_app.py             # Test suite combining functional QA & security assertions
 ```
 
 ---
@@ -167,16 +197,16 @@ secure-tdd-agent-framework/
 ## 5. Quickstart & Installation
 
 ### Option 1: Using with Antigravity
-The `.agents/` folder at the root of this repository is already configured.
-1. Ensure `semgrep` or `cm` is installed on your `PATH`:
+The `.agents/` folder at the root of this repository is auto-discovered.
+1. Install dependencies:
    ```bash
-   pip install semgrep
+   pip install -r requirements.txt
    ```
 2. Activate the Semgrep hook (or keep default CodeMender):
    ```bash
    cp .agents/hooks_semgrep.json .agents/hooks.json
    ```
-3. Start coding! Antigravity will automatically follow the `secure_tdd_workflow.md` rule on all tasks.
+3. Start coding! Antigravity will automatically follow the `secure_tdd_workflow.md` rule across all QA and development tasks.
 
 ### Option 2: Using with Claude Code
 1. Copy `claude-code/CLAUDE.md` and `claude-code/.claude/` to your workspace root:
@@ -193,11 +223,13 @@ The `.agents/` folder at the root of this repository is already configured.
 
 ## 6. Running Tests & Verifying Hooks
 
-### 1. Run Application Unit & Integration Tests
+### 1. Run Application QA & Security Test Suite
 ```bash
 python3 -m unittest discover -s tests
+# or with pytest:
+pytest tests/
 ```
-*Output: 10 tests passed.*
+*Output: 10 tests passed (verifying both functional happy paths and security boundary rejection).*
 
 ### 2. Run Offline Hook Test Suites (Dependency-Free Mocks)
 ```bash

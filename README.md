@@ -12,8 +12,13 @@ Historically, software engineering has often treated **functional QA** and **sec
 - **QA** runs during development and CI to verify business logic, user journeys, and regressions.
 - **Security** is siloed into delayed post-merge scans or third-party audits (leading to 20–70 day remediation cycles and high context-switching costs).
 
-Similarly, AI coding agents without structured QA guidance frequently write unverified code with fragile edge cases and subtle security holes that can compound over time and are hard to find and review later.
+### The Flaw with Reviewing ONLY in CI/CD
+When security and QA reviews happen **only** downstream in CI/CD or post-merge pipelines:
+- **Delayed Discovery**: Developers receive feedback hours, days, or weeks after authoring code, when the architectural context is no longer fresh.
+- **Context-Switching Tax**: Fixing a failure detected in CI requires rolling back branches, reopening pull requests, and context switching away from current feature work.
+- **Compounding Technical Debt**: AI coding agents without local QA guardrails generate unchecked assumptions and subtle logic bypasses that escape into the codebase.
 
+**The Inner-Loop Advantage**: By moving threat modeling and security test assertions into the developer's local test-first loop (TDD), issues are caught and eliminated in seconds while the code is actively being written.
 
 ```
        +------------------------------------------------------------------+
@@ -45,20 +50,33 @@ Similarly, AI coding agents without structured QA guidance frequently write unve
 
 ---
 
-
-## 2. Inspiration & Extensible Design Philosophy
+## 2. Inspiration, CI/CD Balance & Scaling Philosophy
 
 This framework brings together two foundational inspirations:
 1. **Test-Driven Development & Continuous Verification**: Drawing on the engineering discipline of TDD and Paul Hammond's pioneering work where rapid feedback loops, high verification confidence, and test-first design enable developers to ship reliably and move fast.
 2. **Modular Agent Skill Architectures**: Inspired by research into agentic reasoning and specialized skill structures, including [Google's Mantis project](https://github.com/google/mantis).
 
-While dedicated security review tools often focus on deep offline batch audits and exploit reproduction across legacy repositories, **developers need a lightweight, modular system that integrates directly into everyday feature development and QA workflows**.
+### Standalone Security Agents vs. Inner-Loop Development
+Dedicated security review engines like **[Google Mantis](https://github.com/google/mantis)** serve as powerful standalone security reviewers—performing deep offline batch sweeps, multi-repository research, and exploit reproduction in isolated environments.
+
+- **Deeper Security Belongs in CI/CD**: Exhaustive testing (fuzzing, dynamic analysis, complex multi-repo exploit research, and whole-dependency graphing) **should still take place in CI/CD**.
+- **CI/CD Is a Safety Backstop, Not Primary Discovery**: CI/CD should never be the *primary* point where everyday functional flaws and security vulnerabilities are discovered. The inner-loop framework aims to eliminate the vast majority of issues locally during active development, ensuring that code reaching CI/CD is already robust, tested, and defensively sound.
+
+### Solo Developers vs. Scaling to Teams & Centralized Architectures
+- **Out of the Box for Solo Developers**:
+  - Designed to work seamlessly with zero infrastructure: all context lives in human-readable Markdown (`CONTEXT.md`, `threat_model.md`), and local deterministic pre-push hooks run offline.
+  - The developer maintains full visibility into all changes. In this local setup, the coding agent can "self-heal" by updating local `SKILL.md` files directly when new conventions or edge cases are resolved.
+- **Scaling to Larger Teams & Enterprise**:
+  - For larger engineering teams, threat models and skills can scale across services via a **centralized knowledge base** and **shared skill registry**.
+  - **Governance on Skill Evolution**: In a team or enterprise environment, individual coding agents should not have permission to directly mutate skills in a shared registry. Instead, the agent's continuous evolution phase can be configured to submit *suggested skill improvements, PR proposals, or ticket drafts* for review by QA and security leads.
+- **Extensible by Design**: The framework is intentionally unopinionated and modular—it works effortlessly out of the box for an individual developer, while providing clear extension points to integrate with centralized registries, team knowledge bases, and enterprise CI/CD systems.
 
 ### Key Design Principles:
 1. **Developer Inner-Loop Integration**: Plugs directly into everyday development tools (`git`, `pytest`, `unittest`, local linters) without requiring heavyweight infrastructure or out-of-band audit cycles.
 2. **Modular & Extensible Skills**: Skills are loosely coupled and self-contained in standard `SKILL.md` packages. Developers can freely adopt, customize, or extend whichever skills suit their project (e.g. adding custom domain linters, specialized QA runbooks, or tailored threat models).
 3. **Multi-Agent Portability**: Built on open agent skill standards (standard YAML frontmatter and Markdown), allowing identical skills to run seamlessly across **Antigravity**, **Claude Code**, and other coding assistants.
 4. **Zero-Database Transparency**: All architectural state and security context live directly alongside the code in human-readable Markdown (`CONTEXT.md`, `threat_model.md`) and append-only logs (`.security-gate/`).
+
  
 
 

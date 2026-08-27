@@ -86,7 +86,7 @@ def sync_antigravity(target_repo: Path) -> int:
     changes += copy_tree_sync(UPSTREAM_ROOT / ".agents", target_repo / ".agents")
 
     # 3. Sync shared docs & license
-    for doc in ["AGENTS.md", "CONTEXT.md", "LICENSE"]:
+    for doc in ["AGENTS.md", "CONTEXT.md", "LICENSE", ".gitignore"]:
         if copy_file_if_changed(UPSTREAM_ROOT / doc, target_repo / doc):
             changes += 1
 
@@ -189,7 +189,7 @@ def sync_claude_code(target_repo: Path) -> int:
             changes += 1
 
     # 2. Sync shared docs & license
-    for doc in ["CLAUDE.md", "CONTEXT.md", "LICENSE"]:
+    for doc in ["CLAUDE.md", "CONTEXT.md", "LICENSE", ".gitignore"]:
         if copy_file_if_changed(UPSTREAM_ROOT / doc, target_repo / doc):
             changes += 1
 

@@ -167,55 +167,58 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
                     [ git push intercepted by Hook ]
                                    │
                                    ▼
-                     [ Inspect Changed Files ]
+                    [ Inspect Modified Files in Push ]
                                    │
-                    ┌──────────────┴──────────────┐
-              (No changes)                   (Files changed)
-                    │                             │
-                    ▼                             ▼
-              [ Allow Push ]       [ Stage 1: Deterministic Scan ]
-                                    (Fast AST Rules & Autofix)
-                                                  │
-                         ┌────────────────────────┼────────────────────────┐
-                   (Scan Error)              (No Findings)           (Findings Present)
-                         │                        │                        │
-                         ▼                        │                        ▼
-                 [ Check Fail-Open ]              │             [ Rank Finding Severity ]
-            SECURITY_GATE_ALLOW_ON_ERROR          │            (CRITICAL/HIGH vs LOW/INFO)
-                         │                        │                        │
-                  ┌──────┴──────┐                 │             ┌──────────┴──────────┐
-               (false)        (true)              │          (Advisory)            (Blocking)
-                  │             │                 │             │                      │
-                  ▼             ▼                 │             ▼                      ▼
-             [ Deny Push  ] [ Log ERROR ]         │      [ Log Advisory ]      [ Apply Autofix / ]
-             [& Escalate  ] [ Proceed   ]         │      [   Proceed    ]      [ Queue Finding   ]
-                                │                 │             │                      │
-                                └─────────────────┼─────────────┴──────────────────────┘
-                                                  │
-                                                  ▼
-                                      [ Stage 2: Semantic Scan ]
-                                      (Contextual AI / CodeMender)
-                                                  │
-                         ┌────────────────────────┼────────────────────────┐
-                   (Scan Error)              (No Findings)           (Blocking Findings)
-                         │                        │                        │
-                         ▼                        ▼                        ▼
-                 [ Check Fail-Open ]        [ Allow Push ]       [ 3-Attempt Test Loop ]
-            SECURITY_GATE_ALLOW_ON_ERROR                         (Apply Patch & Run Tests)
-                         │                                                 │
-                  ┌──────┴──────┐                               ┌──────────┴──────────┐
-               (false)        (true)                        (Passes in            (Fails Tests
-                  │             │                         <= 3 Attempts)        Past 3rd Attempt)
-                  ▼             ▼                               │                      │
-             [ Deny Push  ] [ Allow Push ]                      ▼                      ▼
-             [& Escalate  ]                               [ Auto-Commit ]       [ Revert Changes ]
-                                                          [ Allow Push  ]       [ git checkout . ]
-                                                                                       │
-                                                                                       ▼
-                                                                              [ Verification Step ]
-                                                                              - Run 'cm verify'
-                                                                              - HITL Defer / Abort
-                                                                              - Non-TTY: Deny Push
+                                   ▼
+                     [ Stage 1: Deterministic Scan ]
+                       (AST Checks & Autofixes)
+                                   │
+            ┌──────────────────────┼──────────────────────┐
+      (Scan Error)           (No Findings)          (Findings Found)
+            │                      │                      │
+            ▼                      │                      ▼
+    [ Check Fail-Open ]            │         [ Evaluate Against Threat Model ]
+    SECURITY_GATE_ALLOW_ON_ERROR   │           (Matches active trust boundary?)
+            │                      │                      │
+     ┌──────┴──────┐               │               ┌──────┴──────┐
+  (false)        (true)            │             (No)          (Yes)
+     │             │               │               │             │
+     ▼             ▼               │               ▼             ▼
+[ Deny Push  ] [ Log Error ]       │       [ Log Advisory ] [ Apply Autofix / ]
+[& Escalate  ] [ Proceed   ]       │       [   Proceed    ] [ Queue for Stage 2]
+                   │               │               │             │
+                   └───────────────┼───────────────┴─────────────┘
+                                   │
+                                   ▼
+                       [ Stage 2: Semantic Scan ]
+                      (Contextual AI / CodeMender)
+                                   │
+            ┌──────────────────────┼──────────────────────┐
+      (Scan Error)           (No Findings)          (Threat-Model Findings)
+            │                      │                      │
+            ▼                      ▼                      ▼
+    [ Check Fail-Open ]      [ Allow Push ]     [ 3-Attempt Test Loop ]
+    SECURITY_GATE_ALLOW_ON_ERROR               (Apply Patch & Run Tests)
+            │                                             │
+     ┌──────┴──────┐                       ┌──────────────┴──────────────┐
+  (false)        (true)                (Passes in                    (Fails Tests
+     │             │                 <= 3 Attempts)                Past 3rd Attempt)
+     ▼             ▼                       │                              │
+[ Deny Push  ] [ Tag Commit with           ▼                              ▼
+[& Escalate  ]   'unverified-scan' ] [ Auto-Commit ]              [ Revert Changes ]
+               [ Allow Push        ] [ Allow Push  ]              [ git checkout . ]
+                                                                          │
+                                                                          ▼
+                                                                 [ Run 'cm verify' ]
+                                                                          │
+                                                     ┌────────────────────┴────────────────────┐
+                                            (Conclusively Not                     (Confirms Issue OR
+                                               Exploitable)                         Verify Crashes)
+                                                     │                                     │
+                                                     ▼                                     ▼
+                                           [ Append Advisory to ]                 [ Escalate to HITL ]
+                                           [ Commit / Audit Log ]                 - Non-TTY: Deny Push
+                                           [    Allow Push      ]
 ```
 
 

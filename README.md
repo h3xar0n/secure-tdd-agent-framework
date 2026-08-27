@@ -64,25 +64,33 @@ While dedicated security review tools often focus on deep offline batch audits a
 
 ```
                  +-----------------------------------------+
-                 |               PLAN & RED                |
+                 |                 1. PLAN                 |
                  |  - Ingest CONTEXT.md                    |
-                 |  - Functional Specs & STRIDE Model      |
-                 |  - Functional + Security Tests (RED)    |
+                 |  - Functional Specs & Scoping           |
+                 |  - STRIDE Threat Model (threat_model.md)|
                  +--------------------+--------------------+
                                       |
                                       v
                  +-----------------------------------------+
-                 |                 GREEN                   |
+                 |                 2. RED                  |
+                 |  - Functional QA Tests (Happy Paths)    |
+                 |  - Edge Cases & Boundary Handling       |
+                 |  - Security Boundary Tests (Assert RED) |
+                 +--------------------+--------------------+
+                                      |
+                                      v
+                 +-----------------------------------------+
+                 |                3. GREEN                 |
                  |  - Clean, Defensive Code (MVP)          |
                  |  - Satisfy All Functional & Red Tests   |
                  +--------------------+--------------------+
                                       |
                                       v
                  +-----------------------------------------+
-                 |            REFACTOR & SECURE            |
-                 |  - Code Quality & Regression Tests      |
-                 |  - Local Scans & Guided Review          |
-                 |  - Evolve Skills & Architectural Specs  |
+                 |          4. REFACTOR & EVOLVE           |
+                 |  - Code Quality & 100% Regression Pass  |
+                 |  - Local Deterministic Scans & Review   |
+                 |  - Update CONTEXT.md & Evolve Skills    |
                  +--------------------+--------------------+
                                       |
                                       +--- Continuous Evolution ---+

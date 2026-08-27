@@ -199,7 +199,7 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
             │                      │                      │
             ▼                      ▼                      ▼
     [ Check Fail-Open ]      [ Allow Push ]     [ 3-Attempt TDD Test Loop ]
-    SECURITY_GATE_ALLOW_ON_ERROR               (Add Test -> Patch -> Full Suite)
+    SECURITY_GATE_ALLOW_ON_ERROR               (Add Test -> Fix -> Run Full Suite)
             │                                             │
      ┌──────┴──────┐                       ┌──────────────┴──────────────┐
   (false)        (true)               (Fails Tests                  (Passes in
@@ -223,9 +223,9 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
 ```
 
 > **TDD Principles in Hook Remediation**:
-> Every automated fix follows the Test-Driven Development (TDD) cycle rather than applying blind patches:
+> Every automated fix follows the Test-Driven Development (TDD) cycle rather than applying isolated code patches:
 > 1. **Add Boundary Test First (RED)**: A test case reproducing the finding or boundary constraint is added to the test suite and confirmed failing.
-> 2. **Apply Minimal Patch (GREEN)**: The defensive code change is applied to satisfy the failing test.
+> 2. **Apply Minimal Fix (GREEN)**: The defensive code change is applied to satisfy the failing test.
 > 3. **Full Suite Regression Verification**: The complete test suite is executed across all existing unit and integration tests to confirm that existing functionality is preserved and regressions are caught early.
 
 

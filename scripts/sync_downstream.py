@@ -124,7 +124,38 @@ def sync_claude_code(target_repo: Path) -> int:
     changes += copy_tree_sync(UPSTREAM_ROOT / ".agents" / "lib", claude_hooks_dst / "lib")
     changes += copy_tree_sync(UPSTREAM_ROOT / ".agents" / "tests", claude_hooks_dst / "tests")
 
-    # 3. Sync skills (transforming to kebab-case)
+    # 4. Sync Claude Code settings.json
+    import json
+    settings_json = target_repo / ".claude" / "settings.json"
+    settings_content = json.dumps(
+        {
+            "permissions": {
+                "allow": ["Bash(cm:*)", "Bash(semgrep:*)"]
+            },
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "if": "Bash(git push*)",
+                                "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/security_gate_hook.sh",
+                                "timeout": 120,
+                            }
+                        ],
+                    }
+                ]
+            },
+        },
+        indent=2,
+    ) + "\n"
+    if not settings_json.exists() or settings_json.read_text(encoding="utf-8") != settings_content:
+        settings_json.parent.mkdir(parents=True, exist_ok=True)
+        settings_json.write_text(settings_content, encoding="utf-8")
+        changes += 1
+
+    # 5. Sync skills (transforming to kebab-case)
     upstream_skills = UPSTREAM_ROOT / ".agents" / "skills"
     claude_skills_dst = target_repo / ".claude" / "skills"
 

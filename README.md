@@ -289,11 +289,50 @@ Different AI coding platforms discover always-on instructions through different 
 | **Universal Agents** | `AGENTS.md` (Project Root) | Universal reference document for any AI coding assistant or developer. |
 | **Shared Context** | `CONTEXT.md` & `threat_model.md` | Living architectural boundaries, helpers, and STRIDE acceptance criteria. |
 
+---
 
+## 5. Primary Use Cases & Operational Scenarios
+
+### 1. Solo Original Feature Development
+When building new software or greenfield features as a solo developer, you retain direct control over every layer of the development cycle:
+- **Direct Skill & Rule Customization**: You can edit `SKILL.md` instructions, add custom domain helpers to `CONTEXT.md`, and configure your own test commands without needing approval from a centralized committee.
+- **Platform Choice**: You can operate natively in Antigravity or in Claude Code CLI depending on your preferred development workflow.
+- **Observable Iteration**: You see every test failure (RED), implementation change (GREEN), and refactoring step in your local environment before code is pushed to remotes.
+
+### 2. Autonomous Remediation & Automated Patching Agents
+Automated security agents that ingest findings from external scanners (e.g. PR checks or pipeline notifications) benefit from specific skills in this framework:
+- **Applicable Skills**:
+  - `security_test_writer`: Translates a finding into an explicit, reproducing test asserting the boundary constraint before touching code.
+  - `defensive_developer`: Applies minimal code modifications using established helpers and parameterization to satisfy the test.
+  - `local_refactor_scanner`: Executes the full local regression test suite to confirm existing functional behavior is preserved.
+- **Operating Without Upfront Threat Models**: An automated patching agent often receives an isolated finding report without a complete architectural threat model. To avoid applying blind patches that break production behavior, the agent uses the repository's `CONTEXT.md` as its primary reference:
+  1. *Context Reference*: The agent reads approved helpers, trust boundaries, and coding conventions from `CONTEXT.md`.
+  2. *Synthesizing Scanner Output with Application Logic*: The agent matches the finding against existing route handlers and data schemas.
+  3. *TDD Guardrail*: By requiring a failing test first and a 100% passing regression run after, the agent verifies that the patch resolves the finding without breaking existing API contracts.
+
+### 3. Analyzing & Remediating Legacy Codebases
+Applying automated security patches directly to legacy repositories with sparse or missing tests is risky. Modifying legacy code without functional test coverage often causes unexpected runtime regressions and breaks downstream consumers.
+
+**Recommended Remediation Sequence for Legacy Applications**:
+1. **Initial Hotspot Triage**: Run dedicated scanning and review tools like Mantis or CodeMender to identify high-risk components and compile an inventory of findings.
+2. **Establish Baseline Functional Test Coverage**: Before modifying application logic, generate functional characterization tests for the target component until all existing paths pass green.
+   - *Example Prompt for Coding Agent*:
+     > "Analyze `[target_module.py]` and its callers. Write characterization unit and integration tests covering the existing happy paths, parameter handling, and return contracts. Confirm all tests pass green against current behavior before applying any security modifications."
+3. **Incremental Secure TDD Fixes**: Once baseline functional tests are passing green, address security findings one by one: write a reproducing boundary test (RED), apply the defensive fix using approved helpers (GREEN), and confirm all existing legacy tests continue to pass.
 
 ---
 
-## 5. Automated Downstream Synchronization
+## 6. Roadmap & Future Capabilities
+
+- **Expanded LLM Engines**: Multi-model routing supporting OpenAI Codex and diverse inference backends for skill execution.
+- **Wiz Code Integration**: Adding Wiz Code as an alternative Stage 1 deterministic scanning engine alongside open-source Semgrep.
+- **Language-Specific Skill Packs**: Dedicated defensive skills and test writers for Go, TypeScript/Node.js, Rust, and Java/Spring.
+- **Infrastructure as Code (IaC) Verification**: Extending test-first security to Terraform and OpenTofu modules, asserting IAM least privilege, network egress boundaries, and resource policies through local policy-as-code tests.
+- **Google Cloud Skill Modules**: Pre-packaged skills for Cloud Run, Cloud KMS, Workload Identity Federation, and Secret Manager safe integration patterns.
+
+---
+
+## 7. Automated Downstream Synchronization
 
 Whenever updates are made to skills, rules, or hook scripts in this repository, the downstream repositories are updated automatically:
 
@@ -314,7 +353,7 @@ The [.github/workflows/sync-downstream.yml](file:///.github/workflows/sync-downs
 
 ---
 
-## 6. Running Tests & Verifying Hooks
+## 8. Running Tests & Verifying Hooks
 
 ### 1. Run Application QA & Security Test Suite
 ```bash

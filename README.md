@@ -332,7 +332,7 @@ bash .agents/tests/run_tests.sh
 # Test Claude Code Hook (in downstream repo)
 bash ../secure-tdd-claude-code/.claude/hooks/tests/run_tests.sh
 ```
-*Output: 52/52 mock tests passing across PASS, ADVISORY, ERROR, BLOCKED, and FIXED outcomes.*
+*Output: 74/74 mock tests passing (37 per test harness) across PASS, ADVISORY, ERROR, BLOCKED, FIXED, and PIPELINE outcomes.*
 
 
 ---

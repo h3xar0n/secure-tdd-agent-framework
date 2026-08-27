@@ -73,10 +73,19 @@ def sync_antigravity(target_repo: Path) -> int:
 
     changes = 0
 
-    # 1. Sync .agents directory
+    # 1. Clean obsolete separate hook files if present
+    for obsolete in [
+        target_repo / ".agents" / "security_gate_hook_semgrep.sh",
+        target_repo / ".agents" / "hooks_semgrep.json",
+    ]:
+        if obsolete.exists():
+            obsolete.unlink()
+            changes += 1
+
+    # 2. Sync .agents directory
     changes += copy_tree_sync(UPSTREAM_ROOT / ".agents", target_repo / ".agents")
 
-    # 2. Sync shared docs & license
+    # 3. Sync shared docs & license
     for doc in ["AGENTS.md", "CONTEXT.md", "LICENSE"]:
         if copy_file_if_changed(UPSTREAM_ROOT / doc, target_repo / doc):
             changes += 1
@@ -93,18 +102,24 @@ def sync_claude_code(target_repo: Path) -> int:
 
     changes = 0
 
-    # 1. Sync shared docs & license
+    # 1. Clean obsolete separate settings/hook files
+    for obsolete in [
+        target_repo / ".claude" / "settings.semgrep.json",
+        target_repo / ".claude" / "hooks" / "security_gate_hook_semgrep.sh",
+    ]:
+        if obsolete.exists():
+            obsolete.unlink()
+            changes += 1
+
+    # 2. Sync shared docs & license
     for doc in ["CLAUDE.md", "CONTEXT.md", "LICENSE"]:
         if copy_file_if_changed(UPSTREAM_ROOT / doc, target_repo / doc):
             changes += 1
 
-    # 2. Sync hooks
+    # 3. Sync modular hook & libraries
     claude_hooks_dst = target_repo / ".claude" / "hooks"
-    for hook_file in ["security_gate_hook.sh", "security_gate_hook_semgrep.sh"]:
-        src = UPSTREAM_ROOT / ".agents" / hook_file
-        dst = claude_hooks_dst / hook_file
-        if copy_file_if_changed(src, dst):
-            changes += 1
+    if copy_file_if_changed(UPSTREAM_ROOT / ".agents" / "security_gate_hook.sh", claude_hooks_dst / "security_gate_hook.sh"):
+        changes += 1
 
     changes += copy_tree_sync(UPSTREAM_ROOT / ".agents" / "lib", claude_hooks_dst / "lib")
     changes += copy_tree_sync(UPSTREAM_ROOT / ".agents" / "tests", claude_hooks_dst / "tests")

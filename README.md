@@ -159,10 +159,12 @@ secure-tdd-agent-framework/ (Canonical Upstream Source of Truth)
 │   │   ├── local_refactor_scanner/
 │   │   ├── skill_evolution_updater/
 │   │   └── history_context_seeder/
-│   ├── hooks.json                     # Pre-push hook (CodeMender / Semgrep)
-│   ├── security_gate_hook.sh          # CodeMender security hook script
-│   ├── security_gate_hook_semgrep.sh  # Semgrep security hook script
-│   ├── lib/gate_common.sh             # Common severity ranking & audit logger
+│   ├── hooks.json                     # Universal pre-push hook configuration
+│   ├── security_gate_hook.sh          # Universal modular security gate hook entrypoint
+│   ├── lib/
+│   │   ├── gate_common.sh             # Common severity ranking, audit logger & notify
+│   │   ├── engine_codemender.sh       # CodeMender scanner engine module
+│   │   └── engine_semgrep.sh          # Semgrep scanner engine module
 │   └── tests/                         # Offline hook test suite (26/26 mock tests)
 ├── scripts/
 │   └── sync_downstream.py             # Automated downstream repository sync engine

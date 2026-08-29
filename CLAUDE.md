@@ -26,6 +26,13 @@ This repository enforces **Test-Driven Development with Integrated Security (Sec
 5. **Continuous Evolution (Learn & Update)**:
    - When a bug, convention, or helper is introduced, extract the systemic rule and append it to `CONTEXT.md` under `## 4. Continuous Evolution: Auto-Evolved Conventions`.
 
+6. **Multi-Finding Remediation Protocol**:
+   - When fixing multiple findings from scans or review, process them sequentially one finding at a time:
+     1. Author one boundary test for the finding (RED).
+     2. Implement the minimal defensive fix (GREEN).
+     3. Verify the local test passes before moving to the next finding.
+   - Avoid batching multiple unrelated edits in a single unverified change. Verify the full suite once all findings have passed their discrete cycle.
+
 ---
 
 ## Approved Helpers & Safe Patterns

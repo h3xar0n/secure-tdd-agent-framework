@@ -17,7 +17,7 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Upstream (Single Source of Truth)
+      - name: Checkout Upstream
         uses: actions/checkout@v4
         with:
           path: upstream

@@ -40,6 +40,8 @@ jobs:
 
       - name: Run Downstream Sync Engine
         run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           python3 upstream/scripts/sync_downstream.py \
             --antigravity-dir ./secure-tdd-antigravity \
             --claude-dir ./secure-tdd-claude-code \

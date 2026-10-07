@@ -130,13 +130,13 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
 ### Phase-by-Phase Breakdown
 
 #### Phase A: Planning, Functional Scoping & Threat Modeling (Plan Phase)
-- **Core Skill**: `threat_model_assessor`
+- **Core Skill**: `threat-model-assessor`
 - Ingests `CONTEXT.md` to identify existing trust boundaries, data flows, and approved helpers.
 - Decomposes the feature into clear functional deliverables and evaluates STRIDE risks (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege).
 - Generates or updates `threat_model.md` at the workspace root, establishing both Functional and Security Acceptance Criteria.
 
 #### Phase B: Functional & Security Test-First Case Creation (Red Phase)
-- **Core Skill**: `security_test_writer`
+- **Core Skill**: `security-test-writer`
 - Authors comprehensive test cases covering:
   1. *Functional Acceptance*: Happy paths, business logic workflows, valid outputs (e.g. HTTP 200/302).
   2. *Edge Cases & Error Handling*: Malformed inputs, missing parameters, out-of-range values.
@@ -148,7 +148,7 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
 - Runs the test suite and confirms tests fail for the expected reason (**RED**).
 
 #### Phase C: Clean Defensive Implementation (Green Phase)
-- **Core Skill**: `defensive_developer`
+- **Core Skill**: `defensive-developer`
 - Authors the minimal, high-quality production code required to satisfy all failing tests.
 - Adheres to the Three Defensive Pillars:
   1. *Strict input validation*: Type safety, structured schemas (`pydantic`), and allow-lists over fragile regex.
@@ -157,7 +157,7 @@ Dedicated security review engines like **[Google Mantis](https://github.com/goog
 - Re-runs the test suite to confirm everything is passing (**GREEN**).
 
 #### Phase D: Refactoring, Quality, Context & Continuous Evolution (Refactor Phase)
-- **Core Skills**: `local_refactor_scanner`, `skill_evolution_updater`
+- **Core Skills**: `local-refactor-scanner`, `skill-evolution-updater`
 - **Refactor & Context Evolution**: Along with code cleanup, the Refactor phase updates local project context and evolves skills to mitigate recurring bugs and security findings:
   1. *Code Cleanliness & Maintainability*: Eliminate duplication, improve modularity, and verify 100% passing test regressions.
   2. *Local Scans & Guided Review*: Fast deterministic checks on changed files (secrets, dependency CVEs, local Semgrep SAST) + guided AI review to verify architectural boundaries.
@@ -320,12 +320,12 @@ secure-tdd-agent-framework/ (Canonical Upstream Source of Truth)
 │   ├── rules/
 │   │   └── secure_tdd_workflow.md    # Always-on workflow rule (Plan -> Red -> Green -> Refactor)
 │   ├── skills/
-│   │   ├── threat_model_assessor/
-│   │   ├── security_test_writer/
-│   │   ├── defensive_developer/
-│   │   ├── local_refactor_scanner/
-│   │   ├── skill_evolution_updater/
-│   │   └── history_context_seeder/
+│   │   ├── threat-model-assessor/
+│   │   ├── security-test-writer/
+│   │   ├── defensive-developer/
+│   │   ├── local-refactor-scanner/
+│   │   ├── skill-evolution-updater/
+│   │   └── history-context-seeder/
 │   ├── hooks.json                     # Universal pre-push hook configuration
 │   ├── security_gate_hook.sh          # Universal modular security gate hook entrypoint
 │   ├── lib/
@@ -369,9 +369,9 @@ When building new software or greenfield features as a solo developer, you retai
 ### 2. Autonomous Remediation & Automated Patching Agents
 Automated security agents that ingest findings from external scanners (e.g. PR checks or pipeline notifications) benefit from specific skills in this framework:
 - **Applicable Skills**:
-  - `security_test_writer`: Translates a finding into an explicit, reproducing test asserting the boundary constraint before touching code.
-  - `defensive_developer`: Applies minimal code modifications using established helpers and parameterization to satisfy the test.
-  - `local_refactor_scanner`: Executes the full local regression test suite to confirm existing functional behavior is preserved.
+  - `security-test-writer`: Translates a finding into an explicit, reproducing test asserting the boundary constraint before touching code.
+  - `defensive-developer`: Applies minimal code modifications using established helpers and parameterization to satisfy the test.
+  - `local-refactor-scanner`: Executes the full local regression test suite to confirm existing functional behavior is preserved.
 - **Operating Without Upfront Threat Models**: An automated patching agent often receives an isolated finding report without a complete architectural threat model. To avoid applying blind patches that break production behavior, the agent uses the repository's `CONTEXT.md` as its primary reference:
   1. *Context Reference*: The agent reads approved helpers, trust boundaries, and coding conventions from `CONTEXT.md`.
   2. *Synthesizing Scanner Output with Application Logic*: The agent matches the finding against existing route handlers and data schemas.

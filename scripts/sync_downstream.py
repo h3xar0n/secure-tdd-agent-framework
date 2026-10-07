@@ -73,7 +73,7 @@ def sync_antigravity(target_repo: Path) -> int:
 
     changes = 0
 
-    # 1. Clean obsolete separate hook files if present
+    # 1. Clean obsolete separate hook files and legacy snake_case skill folders if present
     for obsolete in [
         target_repo / ".agents" / "security_gate_hook_semgrep.sh",
         target_repo / ".agents" / "hooks_semgrep.json",
@@ -81,6 +81,12 @@ def sync_antigravity(target_repo: Path) -> int:
         if obsolete.exists():
             obsolete.unlink()
             changes += 1
+    ag_skills_dir = target_repo / ".agents" / "skills"
+    if ag_skills_dir.exists():
+        for child in ag_skills_dir.iterdir():
+            if child.is_dir() and "_" in child.name:
+                shutil.rmtree(child)
+                changes += 1
 
     # 2. Sync .agents directory
     changes += copy_tree_sync(UPSTREAM_ROOT / ".agents", target_repo / ".agents")
@@ -365,6 +371,12 @@ def git_commit_and_push(repo_dir: Path, upstream_sha: str, auto_commit: bool, au
         print(f"    {line}")
 
     if auto_commit:
+        name_chk = subprocess.run(["git", "config", "user.name"], cwd=repo_dir, capture_output=True, text=True)
+        if not name_chk.stdout.strip():
+            subprocess.run(["git", "config", "user.name", "github-actions[bot]"], cwd=repo_dir, check=True)
+        email_chk = subprocess.run(["git", "config", "user.email"], cwd=repo_dir, capture_output=True, text=True)
+        if not email_chk.stdout.strip():
+            subprocess.run(["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"], cwd=repo_dir, check=True)
         subprocess.run(["git", "add", "-A"], cwd=repo_dir, check=True)
         commit_msg = f"sync: Update skills and hooks from upstream ({upstream_sha})"
         subprocess.run(["git", "commit", "-m", commit_msg], cwd=repo_dir, check=True)

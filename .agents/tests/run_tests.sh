@@ -354,6 +354,365 @@ test_skills_frontmatter_valid() {
   assert_eq "skills: all SKILL.md files have valid YAML frontmatter and kebab-case names" "0" "$bad"
 }
 
+# --- Pre-Commit Gate Tests ---
+
+test_precommit_sensitive_files_blocked() {
+  local repo; repo=$(setup_repo)
+  (
+    cd "$repo" || exit 1
+    # 1. Test .env blocking
+    echo "SECRET=123" > .env
+    git add .env
+    COMMAND_LINE="git commit -m 'add env'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging .env is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions sensitive file or .env" "$(reason "$repo")" ".env"
+  assert_contains "precommit: audit log records BLOCKED event" "$(log_events "$repo")" "BLOCKED"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD .env && rm -f .env
+    # 2. Test .env.local blocking (.env.*)
+    echo "SECRET=123" > .env.local
+    git add .env.local
+    COMMAND_LINE="git commit -m 'add env.local'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging .env.local is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions .env.local" "$(reason "$repo")" ".env.local"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD .env.local && rm -f .env.local
+    # 3. Test terraform state blocking (*.tfstate and *.tfstate.*)
+    echo '{"version": 4}' > terraform.tfstate
+    git add terraform.tfstate
+    COMMAND_LINE="git commit -m 'add tfstate'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging .tfstate is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions terraform.tfstate" "$(reason "$repo")" "terraform.tfstate"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD terraform.tfstate && rm -f terraform.tfstate
+    echo '{"version": 4}' > terraform.tfstate.backup
+    git add terraform.tfstate.backup
+    COMMAND_LINE="git commit -m 'add tfstate backup'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging terraform.tfstate.backup is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions terraform.tfstate.backup" "$(reason "$repo")" "terraform.tfstate.backup"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD terraform.tfstate.backup && rm -f terraform.tfstate.backup
+    # 4. Test *.tfvars in subdirectory
+    mkdir -p infra
+    echo 'db_password = "secret"' > infra/prod.tfvars
+    git add infra/prod.tfvars
+    COMMAND_LINE="git commit -m 'add tfvars'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging infra/prod.tfvars is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions prod.tfvars" "$(reason "$repo")" "prod.tfvars"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD infra/prod.tfvars && rm -rf infra
+    # 5. Test private key & certificate blocking (*.key, *.pem, id_rsa, *credentials*.json)
+    echo "dummy key" > server.key
+    git add server.key
+    COMMAND_LINE="git commit -m 'add key'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging server.key is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions server.key" "$(reason "$repo")" "server.key"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD server.key && rm -f server.key
+    echo "dummy cert" > cert.pem
+    git add cert.pem
+    COMMAND_LINE="git commit -m 'add pem'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging cert.pem is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions cert.pem" "$(reason "$repo")" "cert.pem"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD cert.pem && rm -f cert.pem
+    echo '{"type": "service_account"}' > gcp-credentials.json
+    git add gcp-credentials.json
+    COMMAND_LINE="git commit -m 'add credentials json'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging gcp-credentials.json is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions gcp-credentials.json" "$(reason "$repo")" "gcp-credentials.json"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD gcp-credentials.json && rm -f gcp-credentials.json
+    echo "ssh private key" > id_rsa
+    git add id_rsa
+    COMMAND_LINE="git commit -m 'add id_rsa'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging id_rsa is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions id_rsa" "$(reason "$repo")" "id_rsa"
+
+  cleanup_repo "$repo"
+}
+
+test_precommit_api_keys_blocked() {
+  local repo; repo=$(setup_repo)
+  (
+    cd "$repo" || exit 1
+    # 1. Test AWS API key in code (constructed via printf so static scanners do not flag test file)
+    printf 'AWS_KEY = "%s%s"\n' "AKIA" "IOSFODNN7EXAMPLE" > config.py
+    git add config.py
+    COMMAND_LINE="git commit -m 'add aws key'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging AWS AKIA key is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions AWS Access Key or secret" "$(reason "$repo")" "AWS Access Key"
+  assert_contains "precommit: secret block logged to findings-log.ndjson" "$(log_events "$repo")" "BLOCKED"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD config.py && rm -f config.py
+    # 2. Test GCP API key in code
+    printf 'AIZA_KEY = "%s%s"\n' "AIzaSyD-" "1234567890abcdefghijklmnopqrst" > config.py
+    git add config.py
+    COMMAND_LINE="git commit -m 'add gcp key'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging GCP AIza key is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions Google API Key or secret" "$(reason "$repo")" "Google API Key"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD config.py && rm -f config.py
+    # 3. Test GitHub classic PAT (ghp_) and fine-grained PAT (github_pat_)
+    printf 'GITHUB_TOKEN = "%s%s"\n' "ghp_" "1234567890abcdefghijklmnopqrstuvwxyz" > config.py
+    git add config.py
+    COMMAND_LINE="git commit -m 'add github token'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging GitHub ghp_ token is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions GitHub Personal Access Token" "$(reason "$repo")" "GitHub Personal Access Token"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD config.py && rm -f config.py
+    printf 'GH_FINE_PAT = "%s%s"\n' "github_pat_" "11AA22BB33CC44DD55EE66_0123456789abcdef" > config.py
+    git add config.py
+    COMMAND_LINE="git commit -m 'add fine-grained github pat'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging GitHub github_pat_ token is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions GitHub Personal Access Token" "$(reason "$repo")" "GitHub Personal Access Token"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD config.py && rm -f config.py
+    # 4. Test RSA, OPENSSH, and PGP Private Keys in code
+    printf -- '-----BEGIN %s PRIVATE KEY-----\nMIIEowIBAAKCAQEA0Y1\n-----END %s PRIVATE KEY-----\n' "RSA" "RSA" > secret.txt
+    git add secret.txt
+    COMMAND_LINE="git commit -m 'add rsa private key'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging RSA private key is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions Private Key" "$(reason "$repo")" "Private Key"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD secret.txt && rm -f secret.txt
+    printf -- '-----BEGIN %s PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmU=\n-----END %s PRIVATE KEY-----\n' "OPENSSH" "OPENSSH" > openssh.txt
+    git add openssh.txt
+    COMMAND_LINE="git commit -m 'add openssh private key'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging OPENSSH private key is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions Private Key" "$(reason "$repo")" "Private Key"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD openssh.txt && rm -f openssh.txt
+    printf -- '-----BEGIN %s PRIVATE KEY BLOCK-----\nlQOYBGXyAAAA\n-----END %s PRIVATE KEY BLOCK-----\n' "PGP" "PGP" > pgp.txt
+    git add pgp.txt
+    COMMAND_LINE="git commit -m 'add pgp private key'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging PGP private key block is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions Private Key" "$(reason "$repo")" "Private Key"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD pgp.txt && rm -f pgp.txt
+    # 5. Test Generic High-Entropy API Key assignment
+    printf 'api_key = "%s%s"\n' "mock_high_entropy_token_" "0123456789abcdef0123456789abcdef" > config.py
+    git add config.py
+    COMMAND_LINE="git commit -m 'add generic high-entropy api_key'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: staging generic high-entropy api_key is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: reason mentions Generic High-Entropy API Key" "$(reason "$repo")" "Generic High-Entropy API Key"
+
+  cleanup_repo "$repo"
+}
+
+test_precommit_clean_allowed() {
+  local repo; repo=$(setup_repo)
+  (
+    cd "$repo" || exit 1
+    # Unstaged/untracked .env in working tree must NOT block a clean staged commit
+    echo "UNSTAGED_SECRET=123" > .env
+    echo "def safe_function(): pass" > safe.py
+    git add safe.py
+    COMMAND_LINE="git commit -m 'clean safe code'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: clean staged commit is allowed even with untracked .env" "allow" "$(decision "$repo")"
+
+  (
+    cd "$repo" || exit 1
+    rm -f .env
+    # Safe template exemptions (.env.example, .env.template) must be allowed
+    echo "API_KEY=your_key_here" > .env.example
+    echo "DB_URL=postgres://localhost/db" > .env.template
+    git add .env.example .env.template
+    COMMAND_LINE="git commit -m 'add env templates'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: .env.example and .env.template are allowed" "allow" "$(decision "$repo")"
+
+  cleanup_repo "$repo"
+}
+
+test_precommit_edge_cases_and_claude_stdin() {
+  local repo; repo=$(setup_repo)
+  (
+    cd "$repo" || exit 1
+    # 1. Deleting a tracked .env file (git rm --cached .env) is allowed (--diff-filter=d)
+    echo "OLD_SECRET=1" > .env
+    git add .env
+    git commit -q -m "committed env earlier"
+    git rm -q --cached .env
+    COMMAND_LINE="git commit -m 'remove tracked .env'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: deleting tracked .env via git rm --cached is allowed" "allow" "$(decision "$repo")"
+
+  (
+    cd "$repo" || exit 1
+    git commit -q -m "complete removal of .env" || true
+    rm -f .env
+    # 2. Removing a secret line from a tracked file is allowed (only added lines are flagged)
+    printf 'AWS_KEY = "%s%s"\n' "AKIA" "IOSFODNN7EXAMPLE" > app.py
+    git add app.py
+    git commit -q -m "legacy secret commit"
+    echo 'AWS_KEY = os.environ.get("AWS_KEY")' > app.py
+    git add app.py
+    COMMAND_LINE="git commit -m 'remove hardcoded aws key'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: removing hardcoded secret line is allowed" "allow" "$(decision "$repo")"
+
+  (
+    cd "$repo" || exit 1
+    git commit -q -m "clean app.py"
+    # 3. git commit -am with unstaged secret in tracked file is blocked
+    printf 'AWS_KEY = "%s%s"\n' "AKIA" "IOSFODNN7EXAMPLE" >> app.py
+    COMMAND_LINE="git commit -am 'bypass attempt with -am'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: git commit -am with modified tracked secret is denied" "deny" "$(decision "$repo")"
+  assert_contains "precommit: -am denial mentions AWS Access Key" "$(reason "$repo")" "AWS Access Key"
+
+  (
+    cd "$repo" || exit 1
+    git checkout -q -- app.py
+    # 4. Claude Code stdin JSON payload (AGENT_PLATFORM=claude_code, COMMAND_LINE unset) blocks staged .env
+    echo "SECRET=1" > .env
+    git add .env
+    unset COMMAND_LINE
+    AGENT_PLATFORM="claude_code" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" \
+      <<< '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"test claude stdin\""}}'
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: Claude Code stdin JSON blocks staged .env" "deny" "$(decision "$repo")"
+  assert_contains "precommit: Claude Code JSON envelope mentions .env" "$(reason "$repo")" ".env"
+
+  (
+    cd "$repo" || exit 1
+    # 5. Non-commit git command containing the word 'commit' in quotes is allowed even with staged .env (stdin & COMMAND_LINE)
+    unset COMMAND_LINE
+    AGENT_PLATFORM="claude_code" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" \
+      <<< '{"tool_name":"Bash","tool_input":{"command":"git log --grep=\"fix commit message\" -n 5"}}'
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: git log --grep='fix commit message' (stdin) does not false-positive trigger precommit gate" "allow" "$(decision "$repo")"
+
+  (
+    cd "$repo" || exit 1
+    COMMAND_LINE='git log --grep="fix commit message" -n 5' \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: git log --grep='fix commit message' (COMMAND_LINE) is allowed" "allow" "$(decision "$repo")"
+
+  (
+    cd "$repo" || exit 1
+    # 6. Chained / git -C command detection blocks staged .env
+    COMMAND_LINE="git -C \"$repo\" commit -m 'commit via -C'" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" < <(printf '\n\n\n\n\n')
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: git -C <repo> commit blocks staged .env" "deny" "$(decision "$repo")"
+
+  (
+    cd "$repo" || exit 1
+    git reset -q HEAD .env && rm -f .env
+    echo "x = 1" > clean.py
+    git add clean.py
+    unset COMMAND_LINE
+    AGENT_PLATFORM="claude_code" \
+      bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" \
+      <<< '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"clean claude commit\""}}'
+    echo $? > "$repo/.hook_exit"
+  )
+  assert_eq "precommit: Claude Code stdin JSON allows clean staged commit" "allow" "$(decision "$repo")"
+
+  cleanup_repo "$repo"
+}
+
 # --- run -----------------------------------------------------------------
 
 for t in \
@@ -376,6 +735,10 @@ for t in \
   test_pipeline_deterministic_error_fail_open_proceeds_to_stage2 \
   test_pipeline_tools_missing_passes_smoothly \
   test_skills_frontmatter_valid \
+  test_precommit_sensitive_files_blocked \
+  test_precommit_api_keys_blocked \
+  test_precommit_clean_allowed \
+  test_precommit_edge_cases_and_claude_stdin \
 ; do
   echo "-- $t"
   "$t"

@@ -10,8 +10,9 @@ The pre-push hook intercepts `git push` commands locally to verify code correctn
 
 | Module | Location | Purpose |
 | :--- | :--- | :--- |
-| **Hook Entrypoint** | [`.agents/security_gate_hook.sh`](../security_gate_hook.sh) | Sourced on `git push`. Detects available tools on `PATH` and runs the sequential pipeline (Stage 1 $\rightarrow$ Stage 2). |
+| **Hook Entrypoint** | [`.agents/security_gate_hook.sh`](../security_gate_hook.sh) | Sourced on `git commit` or `git push`. Detects commands and runs Stage 0 on commit, or sequential SAST pipeline (Stage 1 $\rightarrow$ Stage 2) on push. |
 | **Common Library** | [`gate_common.sh`](gate_common.sh) | Formats dual platform responses (Antigravity & Claude Code), manages NDJSON logging, generates structured commits (`commit_fix`), evolves `CONTEXT.md`, and handles fail-open tagging. |
+| **Stage 0 Engine** | [`engine_precommit.sh`](engine_precommit.sh) | Intercepts `git commit` via PreToolUse; inspects staged files (`git diff --cached`) to block sensitive files (.env, .tfstate, *.key) and hardcoded secrets/API keys (AWS, GCP, GitHub, private keys). |
 | **Stage 1 Engine** | [`engine_semgrep.sh`](engine_semgrep.sh) | Executes deterministic AST pattern scanning, matches findings to `threat_model.md`, runs 3-attempt autofixes, and exports unresolved issues to Stage 2. |
 | **Stage 2 Engine** | [`engine_codemender.sh`](engine_codemender.sh) | Performs contextual semantic analysis (`cm find` / `cm report`), ingests Stage 1 handoffs, runs the 3-attempt TDD remediation loop, evaluates exploitability via `cm verify`, and escalates to human review. |
 
@@ -83,6 +84,11 @@ The pre-push hook intercepts `git push` commands locally to verify code correctn
 ---
 
 ## 3. How the Pipeline Works
+
+### 0. Stage 0: Pre-Commit Secrets & Sensitive File Gate (`engine_precommit.sh`)
+- Intercepts `git commit` commands via `PreToolUse` before changes are recorded into local Git history.
+- **Sensitive File Blocking**: Inspects staged files (`git diff --cached --name-only --diff-filter=d`, or `git diff HEAD` when `-a`/`--all` is passed) to block environment files (`.env`, `.env.*`, `*.env`, `.envrc`), Terraform state/variable files (`*.tfstate`, `*.tfstate.*`, `*.tfvars`, `*.tfvars.json`), private keys/certificates (`*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.jks`, `id_rsa`, `id_ed25519`), and credential files (`*credentials*.json`, `*service-account*.json`), while exempting safe documentation templates (`*.example`, `*.template`, `*.sample`, `*.dist`).
+- **Plaintext Secret Detection**: Scans added lines in the staged diff (`git diff --cached -U0`) for AWS Access Keys (`AKIA`/`ASIA`), Google Cloud API Keys (`AIza`), GitHub Personal Access Tokens (`ghp_`/`github_pat_`), Private Key headers (`BEGIN ... PRIVATE KEY`), and generic high-entropy secret assignments.
 
 ### 1. File Discovery
 The hook examines outgoing commits (`git diff --name-only origin/main` or `HEAD~1`) to identify modified source files. Untracked and unmodified files are excluded.

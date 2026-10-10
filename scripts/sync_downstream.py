@@ -110,7 +110,7 @@ This repository is the dedicated Antigravity distribution of the **[Secure TDD A
 
 - `.agents/rules/secure_tdd_workflow.md`: Always-on 4-phase workflow rule (`PLAN` -> `RED` -> `GREEN` -> `REFACTOR`).
 - `.agents/skills/`: Specialized agent skills for threat modeling, security test writing, defensive coding, local refactor scanning, and skill evolution.
-- `.agents/hooks.json` & `.agents/security_gate_hook.sh`: Local pre-push hook enforcing test-first verification before code reaches remote repositories.
+- `.agents/hooks.json` & `.agents/security_gate_hook.sh`: Local PreToolUse security gate hook enforcing Stage 0 pre-commit secret/sensitive-file protection (`git commit`) and Stages 1-2 pre-push test-first SAST verification (`git push`) before code reaches remote repositories.
 - `CONTEXT.md`: Living repository context, trust boundaries, and approved helpers.
 - `AGENTS.md`: Universal agent reference guide.
 
@@ -213,7 +213,7 @@ This repository is the dedicated Claude Code distribution of the **[Secure TDD A
 
 - `CLAUDE.md`: System prompt instructions loaded on Claude Code session start to enforce the 4-phase inner loop (`PLAN` -> `RED` -> `GREEN` -> `REFACTOR`).
 - `.claude/skills/`: Specialized kebab-case agent skills for threat modeling, security test writing, defensive coding, and refactor scanning.
-- `.claude/settings.json` & `.claude/hooks/security_gate_hook.sh`: PreToolUse bash hook enforcing test-first verification before `git push` runs.
+- `.claude/settings.json` & `.claude/hooks/security_gate_hook.sh`: PreToolUse bash hook enforcing Stage 0 pre-commit secret/sensitive-file protection (`git commit`) and Stages 1-2 pre-push test-first SAST verification (`git push`).
 - `CONTEXT.md`: Living repository context, trust boundaries, and approved helpers.
 
 ## Getting Started
@@ -301,7 +301,6 @@ Licensed under the [Apache License, Version 2.0](LICENSE).
                         "hooks": [
                             {
                                 "type": "command",
-                                "if": "Bash(git push*)",
                                 "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/security_gate_hook.sh",
                                 "timeout": 120,
                             }

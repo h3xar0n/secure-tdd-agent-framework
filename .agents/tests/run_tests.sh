@@ -237,6 +237,143 @@ test_cm_mixed_severity_fixes_blocking_logs_advisory() {
   cleanup_repo "$repo"
 }
 
+test_cm_snake_case_fields_supported() {
+  local repo; repo=$(setup_repo)
+  # Turn 1: snake_case finding blocks, extracts title as description, and logs DENIED_TO_AGENT
+  SECURITY_GATE_SCANNER=codemender MOCK_CM_REPORT_MODE=high MOCK_CM_REPORT_STYLE=snake_case \
+    run_hook "$AGENTS_DIR/security_gate_hook.sh" "$repo"
+  assert_eq "cm: snake_case fields (finding_id, file_path, severity) block and prompt agent" "deny" "$(decision "$repo")"
+  assert_contains "cm: snake_case extracts title field into rejection prompt" "$(reason "$repo")" "SQL Injection via unsanitized input"
+  assert_contains "cm: snake_case attempt logged as DENIED_TO_AGENT" "$(log_events "$repo")" "DENIED_TO_AGENT"
+
+  # Turn 2: clean scan under snake_case transitions prior DENIED_TO_AGENT finding to FIXED
+  SECURITY_GATE_SCANNER=codemender MOCK_CM_REPORT_MODE=clean MOCK_CM_REPORT_STYLE=snake_case \
+    run_hook "$AGENTS_DIR/security_gate_hook.sh" "$repo"
+  assert_eq "cm: snake_case turn 2 after fix allows" "allow" "$(decision "$repo")"
+  assert_contains "cm: snake_case resolved finding logged as FIXED" "$(log_events "$repo")" "FIXED"
+  local context_content
+  context_content=$(cd "$repo" && cat CONTEXT.md 2>/dev/null || echo "")
+  assert_contains "cm: snake_case CONTEXT.md evolved with F1" "$context_content" "Auto-Evolved Convention (F1)"
+  cleanup_repo "$repo"
+}
+
+test_cm_reopened_status_blocks() {
+  local repo; repo=$(setup_repo)
+  # 1. REOPENED status blocks push
+  SECURITY_GATE_SCANNER=codemender MOCK_CM_REPORT_MODE=high MOCK_CM_REPORT_STYLE=snake_case MOCK_CM_FINDING_STATUS=REOPENED \
+    run_hook "$AGENTS_DIR/security_gate_hook.sh" "$repo"
+  assert_eq "cm: REOPENED status blocks push" "deny" "$(decision "$repo")"
+  assert_contains "cm: REOPENED logged as DENIED_TO_AGENT" "$(log_events "$repo")" "DENIED_TO_AGENT"
+  cleanup_repo "$repo"
+
+  # 2. DISMISSED and FIXED statuses in cm report are ignored and allow push
+  local repo2; repo2=$(setup_repo)
+  SECURITY_GATE_SCANNER=codemender MOCK_CM_REPORT_MODE=inactive MOCK_CM_REPORT_STYLE=snake_case \
+    run_hook "$AGENTS_DIR/security_gate_hook.sh" "$repo2"
+  assert_eq "cm: DISMISSED and FIXED findings in report are ignored and allow push" "allow" "$(decision "$repo2")"
+  cleanup_repo "$repo2"
+
+  # 3. Multi-status report (OPEN, REOPENED, DISMISSED, FIXED) blocks only on OPEN and REOPENED
+  local repo3; repo3=$(setup_repo)
+  SECURITY_GATE_SCANNER=codemender MOCK_CM_REPORT_MODE=multi_status MOCK_CM_REPORT_STYLE=snake_case \
+    run_hook "$AGENTS_DIR/security_gate_hook.sh" "$repo3"
+  assert_eq "cm: multi_status report blocks on OPEN and REOPENED" "deny" "$(decision "$repo3")"
+  assert_contains "cm: multi_status blocks with exactly 2 unresolved findings (F_OPEN and F_REOPENED)" "$(reason "$repo3")" "2 unresolved finding(s)"
+  cleanup_repo "$repo3"
+}
+
+test_cm_verify_dismissed_allows_as_advisory() {
+  local repo; repo=$(setup_repo)
+  for _ in 1 2 3; do
+    SECURITY_GATE_SCANNER=codemender MOCK_CM_REPORT_MODE=high MOCK_CM_REPORT_STYLE=snake_case \
+      run_hook "$AGENTS_DIR/security_gate_hook.sh" "$repo"
+  done
+  # Turn 4: cm verify exits 0 but transitions status to DISMISSED under snake_case
+  SECURITY_GATE_SCANNER=codemender MOCK_CM_REPORT_MODE=high MOCK_CM_REPORT_STYLE=snake_case MOCK_CM_VERIFY_MODE=dismissed \
+    run_hook "$AGENTS_DIR/security_gate_hook.sh" "$repo"
+  assert_eq "cm: cm verify DISMISSED status allows with advisory" "allow" "$(decision "$repo")"
+  assert_contains "cm: DISMISSED finding logged as ADVISORY" "$(log_events "$repo")" "ADVISORY"
+  cleanup_repo "$repo"
+}
+
+test_cm_path_suffix_collision_prevented() {
+  local repo; repo=$(setup_repo)
+  (
+    cd "$repo" || exit 1
+    echo "print('safe')" > other_vuln.py
+    git add other_vuln.py
+    git commit -q -m "add other_vuln.py"
+  )
+  # Scanner flags 'vuln.py', but only 'other_vuln.py' was modified in the latest commit
+  SECURITY_GATE_SCANNER=codemender MOCK_CM_REPORT_MODE=high MOCK_FILE="vuln.py" \
+    run_hook "$AGENTS_DIR/security_gate_hook.sh" "$repo"
+  # Suffix collision must NOT match other_vuln.py with vuln.py
+  assert_eq "cm: other_vuln.py does not collide with vuln.py suffix" "allow" "$(decision "$repo")"
+  cleanup_repo "$repo"
+}
+
+test_hook_non_push_command_allowed_immediately() {
+  local repo; repo=$(setup_repo)
+  # 1. Antigravity top-level CommandLine: non-push allowed
+  (
+    cd "$repo" || exit 1
+    PATH="$MOCK_BIN:$PATH" \
+    SECURITY_GATE_SCANNER=codemender \
+    MOCK_CM_REPORT_MODE=high \
+    bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" <<< '{"CommandLine":"git status"}'
+  )
+  assert_eq "hook: non-push command (git status) allowed immediately without scan" "allow" "$(decision "$repo")"
+
+  # 2. Antigravity jsonhook.go envelope (.toolCall.args.CommandLine): non-push allowed, git -C push intercepted
+  (
+    cd "$repo" || exit 1
+    PATH="$MOCK_BIN:$PATH" \
+    SECURITY_GATE_SCANNER=codemender \
+    MOCK_CM_REPORT_MODE=high \
+    bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" <<< '{"toolCall":{"args":{"CommandLine":"git status"}}}'
+  )
+  assert_eq "hook: Antigravity toolCall.args.CommandLine non-push allowed" "allow" "$(decision "$repo")"
+
+  (
+    cd "$repo" || exit 1
+    PATH="$MOCK_BIN:$PATH" \
+    SECURITY_GATE_SCANNER=codemender \
+    MOCK_CM_REPORT_MODE=high \
+    bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" <<< '{"toolCall":{"args":{"CommandLine":"git -C /repo push origin main"}}}'
+  )
+  assert_eq "hook: Antigravity toolCall.args.CommandLine git -C push intercepted and denied on high finding" "deny" "$(decision "$repo")"
+
+  # 3. Claude Code envelope (.tool_input.command): non-push allowed, compound push intercepted
+  (
+    cd "$repo" || exit 1
+    PATH="$MOCK_BIN:$PATH" \
+    SECURITY_GATE_SCANNER=codemender \
+    MOCK_CM_REPORT_MODE=high \
+    bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" <<< '{"tool_input":{"command":"pytest"}}'
+  )
+  assert_eq "hook: Claude Code tool_input.command non-push (pytest) allowed" "allow" "$(decision "$repo")"
+
+  (
+    cd "$repo" || exit 1
+    PATH="$MOCK_BIN:$PATH" \
+    SECURITY_GATE_SCANNER=codemender \
+    MOCK_CM_REPORT_MODE=high \
+    bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" <<< '{"tool_input":{"command":"git status && git push"}}'
+  )
+  assert_eq "hook: Claude Code tool_input.command compound git push intercepted and denied" "deny" "$(decision "$repo")"
+
+  # 4. Quoted "git push" in commit message allowed without scan
+  (
+    cd "$repo" || exit 1
+    PATH="$MOCK_BIN:$PATH" \
+    SECURITY_GATE_SCANNER=codemender \
+    MOCK_CM_REPORT_MODE=high \
+    bash "$AGENTS_DIR/security_gate_hook.sh" > "$repo/.hook_stdout" 2> "$repo/.hook_stderr" <<< '{"CommandLine":"git commit -m \"fix before git push\""}'
+  )
+  assert_eq "hook: quoted git push in commit message allowed immediately" "allow" "$(decision "$repo")"
+  cleanup_repo "$repo"
+}
+
 test_semgrep_pass_no_findings() {
   local repo; repo=$(setup_repo)
   SECURITY_GATE_SCANNER=semgrep MOCK_SEMGREP_MODE=clean run_hook "$AGENTS_DIR/security_gate_hook.sh" "$repo"
@@ -367,6 +504,11 @@ for t in \
   test_cm_blocking_retries_exhausted_cm_verify_exploitable_fails_closed \
   test_cm_blocking_retries_exhausted_cm_verify_crash_fails_closed \
   test_cm_mixed_severity_fixes_blocking_logs_advisory \
+  test_cm_snake_case_fields_supported \
+  test_cm_reopened_status_blocks \
+  test_cm_verify_dismissed_allows_as_advisory \
+  test_cm_path_suffix_collision_prevented \
+  test_hook_non_push_command_allowed_immediately \
   test_semgrep_pass_no_findings \
   test_semgrep_error_blocks_by_default \
   test_semgrep_error_allow_on_error_true \

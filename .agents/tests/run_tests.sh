@@ -350,8 +350,12 @@ test_skills_frontmatter_valid() {
       bad=1
       log_fail "skill frontmatter description in $skill_md contains forbidden characters (colons or parentheses)"
     fi
+    if [[ "$fm_desc_raw" != *"Use when "* ]] || { [[ "$fm_desc_raw" != *"Do not use for "* ]] && [[ "$fm_desc_raw" != *"Don't use for "* ]]; }; then
+      bad=1
+      log_fail "skill frontmatter description in $skill_md must include explicit 'Use when ...' and 'Do not use for ...' routing triggers"
+    fi
   done
-  assert_eq "skills: all SKILL.md files have valid YAML frontmatter and kebab-case names" "0" "$bad"
+  assert_eq "skills: all SKILL.md files have valid YAML frontmatter, kebab-case names, and routing triggers" "0" "$bad"
 }
 
 # --- run -----------------------------------------------------------------

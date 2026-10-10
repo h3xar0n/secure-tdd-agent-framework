@@ -1,6 +1,6 @@
 ---
 name: local-refactor-scanner
-description: Refactors code for quality and maintainability, executes full test suite regression passes, and runs local deterministic security and lint scans in Phase D REFACTOR.
+description: Refactors code for quality and maintainability, executes full test suite regression passes, and runs local deterministic security and lint scans in Phase D REFACTOR. Use when cleaning up code structure and eliminating duplication after tests pass, running local linters and fast offline scanners for secrets or dependencies, executing full regression test suites, and performing guided code reviews. Do not use for implementing initial feature logic, writing failing test-first suites, or modifying architectural threat models.
 ---
 
 # Code Refactoring, Quality & Local Scanner Skill (Phase D: REFACTOR Phase)

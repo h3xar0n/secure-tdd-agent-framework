@@ -1,6 +1,6 @@
 ---
 name: defensive-developer
-description: Implements clean, maintainable production code to deliver features and satisfy functional and security test assertions in Phase C GREEN.
+description: Implements clean, maintainable production code to deliver features and satisfy functional and security test assertions in Phase C GREEN. Use when writing minimal, modular production code to turn failing RED tests GREEN, applying input validation allow-lists, enforcing explicit caller authorization, and using parameterized sinks and least-privilege payloads. Do not use for authoring initial tests, performing initial threat modeling, or running post-implementation security scans.
 ---
 
 # Feature Implementation & Defensive Developer Skill (Phase C: GREEN Phase)

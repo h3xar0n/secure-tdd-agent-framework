@@ -301,7 +301,6 @@ Licensed under the [Apache License, Version 2.0](LICENSE).
                         "hooks": [
                             {
                                 "type": "command",
-                                "if": "Bash(git push*)",
                                 "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/security_gate_hook.sh",
                                 "timeout": 120,
                             }

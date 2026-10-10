@@ -42,7 +42,7 @@ allow() {
   if _is_claude_code; then
     echo '{"hookSpecificOutput": {"permissionDecision": "allow"}}'
   else
-    echo '{"allow_tool": true}'
+    echo '{"allow_tool": true, "decision": "allow"}'
   fi
   exit 0
 }
@@ -55,7 +55,7 @@ deny() {
   if _is_claude_code; then
     jq -n --arg reason "$reason" '{"hookSpecificOutput": {"permissionDecision": "deny", "permissionDecisionReason": $reason}}'
   else
-    jq -n --arg reason "$reason" '{"allow_tool": false, "reason": $reason}'
+    jq -n --arg reason "$reason" '{"allow_tool": false, "decision": "deny", "reason": $reason, "deny_reason": $reason}'
   fi
   exit 0
 }
@@ -85,13 +85,20 @@ matches_threat_model() {
     return 0
   fi
 
-  # Check if threat_model.md references the rule, finding, or file
-  if grep -qiE "$finding_id|$rule_id|$(basename "$file_path")" "$tm_file" 2>/dev/null; then
+  # Check if threat_model.md references the rule, finding, or file using safe literal string matching
+  local base_file
+  base_file="$(basename "$file_path")"
+  if { [ -n "$finding_id" ] && grep -Fqi -- "$finding_id" "$tm_file" 2>/dev/null; } || \
+     { [ -n "$rule_id" ] && grep -Fqi -- "$rule_id" "$tm_file" 2>/dev/null; } || \
+     { [ -n "$file_path" ] && grep -Fqi -- "$file_path" "$tm_file" 2>/dev/null; } || \
+     { [ -n "$base_file" ] && grep -Fqi -- "$base_file" "$tm_file" 2>/dev/null; }; then
     return 0
   fi
 
-  # If threat model is present and does not reference this rule/file, treat as advisory
-  return 1
+  # Never silently downgrade HIGH or CRITICAL findings to advisory just because
+  # threat_model.md exists but omitted the file or finding.
+  # (Preserves security gate integrity for un-modeled new files).
+  return 0
 }
 
 # --- Audit Logging, Attempt Tracking & Notification ---
@@ -179,8 +186,8 @@ tag_unverified_scan() {
 
 commit_fix() {
   local finding_id="$1" file_path="$2" rule_desc="${3:-defensive boundary fix}"
-  git add -A
-  if git diff --cached --quiet; then
+  git add -- "$file_path"
+  if git diff --cached --quiet -- "$file_path"; then
     echo "Fix confirmed finding resolved but left no working-tree changes to commit." >&2
     return 0
   fi
@@ -195,7 +202,7 @@ security: automated fix for $finding_id ($file_path)
 - Full Test Suite: All unit and integration tests passing via $SECURITY_GATE_TEST_CMD
 EOF
 )
-  git commit -q -m "$commit_msg"
+  git commit -q -m "$commit_msg" -- "$file_path"
   echo "Committed automated fix for $finding_id ($file_path) with structured verification details." >&2
 }
 
@@ -216,7 +223,7 @@ evolve_context_and_skills() {
         echo -e "\n## 4. Continuous Evolution: Auto-Evolved Conventions\n$entry" >> "$context_file"
       fi
       git add "$context_file" 2>/dev/null || true
-      git commit -q -m "docs(context): record auto-evolved convention for $finding_id" 2>/dev/null || true
+      git commit -q -m "docs(context): record auto-evolved convention for $finding_id" -- "$context_file" 2>/dev/null || true
       echo "Updated CONTEXT.md with auto-evolved convention for $finding_id." >&2
     fi
   fi

@@ -12,18 +12,48 @@ case "$1" in
       echo "cm: authentication failed - run 'gcloud auth application-default login'" >&2
       exit 1
     fi
-    # Once a fix has been "applied" (mock cm fix touches STATE_FILE), report clean.
+    # If mock cm verify has verified and marked DISMISSED, reflect in state or return dismissed finding
     if [ -f "$STATE_FILE" ]; then
       echo '[]'
       exit 0
     fi
-    case "${MOCK_CM_REPORT_MODE:-clean}" in
-      clean) echo '[]' ;;
-      high)  echo "[{\"FindingID\":\"F1\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\"}]" ;;
-      low)   echo "[{\"FindingID\":\"F1\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"LOW\"}]" ;;
-      mixed) echo "[{\"FindingID\":\"F1\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\"},{\"FindingID\":\"F2\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"LOW\"}]" ;;
-      *) echo '[]' ;;
-    esac
+    if [ -f "${MOCK_STATE_DIR:-/tmp}/cm_dismissed_marker" ]; then
+      if [ "${MOCK_CM_REPORT_STYLE:-}" = "snake_case" ]; then
+        echo "[{\"finding_id\":\"F1\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"HIGH\",\"status\":\"DISMISSED\"}]"
+      else
+        echo "[{\"FindingID\":\"F1\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\",\"Status\":\"DISMISSED\"}]"
+      fi
+      exit 0
+    fi
+
+    # Determine status field (OPEN or REOPENED)
+    status_val="${MOCK_CM_FINDING_STATUS:-OPEN}"
+
+    if [ "${MOCK_CM_REPORT_STYLE:-}" = "snake_case" ]; then
+      case "${MOCK_CM_REPORT_MODE:-clean}" in
+        clean) echo '[]' ;;
+        high)  echo "[{\"finding_id\":\"F1\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"HIGH\",\"status\":\"${status_val}\",\"title\":\"SQL Injection via unsanitized input\"}]" ;;
+        low)   echo "[{\"finding_id\":\"F1\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"LOW\",\"status\":\"${status_val}\",\"title\":\"Minor info exposure\"}]" ;;
+        mixed) echo "[{\"finding_id\":\"F1\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"HIGH\",\"status\":\"${status_val}\",\"title\":\"SQL Injection via unsanitized input\"},{\"finding_id\":\"F2\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"LOW\",\"status\":\"${status_val}\",\"title\":\"Minor info exposure\"}]" ;;
+        inactive) echo "[{\"finding_id\":\"F_DISMISSED\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"HIGH\",\"status\":\"DISMISSED\",\"title\":\"Dismissed issue\"},{\"finding_id\":\"F_FIXED\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"HIGH\",\"status\":\"FIXED\",\"title\":\"Fixed issue\"}]" ;;
+        multi_status) echo "[{\"finding_id\":\"F_OPEN\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"HIGH\",\"status\":\"OPEN\",\"title\":\"Open issue\"},{\"finding_id\":\"F_REOPENED\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"HIGH\",\"status\":\"REOPENED\",\"title\":\"Reopened issue\"},{\"finding_id\":\"F_DISMISSED\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"HIGH\",\"status\":\"DISMISSED\",\"title\":\"Dismissed issue\"},{\"finding_id\":\"F_FIXED\",\"file_path\":\"${MOCK_FILE:-vuln.py}\",\"severity\":\"HIGH\",\"status\":\"FIXED\",\"title\":\"Fixed issue\"}]" ;;
+        *) echo '[]' ;;
+      esac
+    else
+      local_status_field=""
+      if [ -n "${MOCK_CM_FINDING_STATUS:-}" ]; then
+        local_status_field=",\"Status\":\"${MOCK_CM_FINDING_STATUS}\""
+      fi
+      case "${MOCK_CM_REPORT_MODE:-clean}" in
+        clean) echo '[]' ;;
+        high)  echo "[{\"FindingID\":\"F1\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\"${local_status_field}}]" ;;
+        low)   echo "[{\"FindingID\":\"F1\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"LOW\"${local_status_field}}]" ;;
+        mixed) echo "[{\"FindingID\":\"F1\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\"${local_status_field}},{\"FindingID\":\"F2\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"LOW\"${local_status_field}}]" ;;
+        inactive) echo "[{\"FindingID\":\"F_DISMISSED\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\",\"Status\":\"DISMISSED\"},{\"FindingID\":\"F_FIXED\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\",\"Status\":\"FIXED\"}]" ;;
+        multi_status) echo "[{\"FindingID\":\"F_OPEN\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\",\"Status\":\"OPEN\"},{\"FindingID\":\"F_REOPENED\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\",\"Status\":\"REOPENED\"},{\"FindingID\":\"F_DISMISSED\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\",\"Status\":\"DISMISSED\"},{\"FindingID\":\"F_FIXED\",\"FilePath\":\"${MOCK_FILE:-vuln.py}\",\"Severity\":\"HIGH\",\"Status\":\"FIXED\"}]" ;;
+        *) echo '[]' ;;
+      esac
+    fi
     exit 0
     ;;
   verify)
@@ -34,6 +64,10 @@ case "$1" in
       exit 0
     elif [ "${MOCK_CM_VERIFY_MODE:-}" = "clean" ]; then
       exit 1
+    elif [ "${MOCK_CM_VERIFY_MODE:-}" = "dismissed" ]; then
+      # Simulates real cm v0.13.0 verify exiting 0 but transitioning finding status to DISMISSED
+      touch "${MOCK_STATE_DIR:-/tmp}/cm_dismissed_marker" 2>/dev/null || true
+      exit 0
     fi
     # default fallback to MOCK_CM_VERIFY_EXIT (1 = not exploitable)
     exit "${MOCK_CM_VERIFY_EXIT:-1}"

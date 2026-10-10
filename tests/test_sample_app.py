@@ -86,6 +86,16 @@ class SecurityHelperUnitTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             resolve_safe_path(base, "../../../secret.txt")
 
+        # Assert rejection of absolute paths
+        with self.assertRaises(ValueError):
+            resolve_safe_path(base, "/etc/passwd")
+
+        with self.assertRaises(ValueError):
+            resolve_safe_path(base, "/tmp/sandbox/report.pdf")
+
+        with self.assertRaises(ValueError):
+            resolve_safe_path(base, "\\windows\\path")
+
     def test_safe_redirect(self):
         self.assertEqual(safe_redirect("/home"), "/home")
         self.assertEqual(safe_redirect("https://example.com/login", {"example.com"}), "https://example.com/login")

@@ -42,6 +42,8 @@ This document is the living STRIDE threat model artifact for the Secure TDD fram
 | **Information Disclosure** | T4 | Plaintext secrets or credentials committed in code or leaked in error traces. | Deterministic local secret scanning in Phase D; gate blocks credentials in diffs. |
 | **Denial of Service** | T5 | Scanner hanging or infinite auto-fix retry loops stalling the developer. | Strict timeouts (120s max) and capped retry counters (`SECURITY_GATE_MAX_RETRIES=1`). |
 | **Elevation of Privilege** | T6 | Agent executing unapproved system commands via shell expansion. | Sandboxed execution permissions and strict `shell=False` subprocess invocations. |
+| **Information Disclosure** | T7 | Staging sensitive state/environment files (*.tfstate, .env, *.key) into git commits. | Pre-commit inspection of staged filenames (`git diff --cached --name-only`) blocks disallowed patterns. |
+| **Information Disclosure** | T8 | Staging high-entropy credentials or plaintext API keys (AWS, GCP, GitHub, RSA/OPENSSH private keys) in staged content. | Pre-commit content inspection (`git diff --cached`) intercepts and blocks known token signatures. |
 
 ---
 
@@ -52,3 +54,6 @@ The following criteria MUST be asserted in Phase B test suites:
 2. High-severity findings block the push unless remediated.
 3. Successful fixes must pass both unit tests and a secondary scan before approval.
 4. Spaces or unusual characters in file paths must not cause command execution errors.
+5. Commits staging sensitive files (*.tfstate, *.tfstate.*, *.tfvars, .env, .env.*, *.pem, *.key, *credentials*.json) are blocked with explicit reason (HTTP/command deny).
+6. Commits staging high-entropy or plaintext API keys (AWS AKIA..., GCP AIza..., GitHub ghp_/github_pat_, RSA/OPENSSH private keys) are blocked with explicit remediation advice.
+7. Clean commits without sensitive files or secrets pass cleanly through the gate.

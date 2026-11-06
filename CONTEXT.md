@@ -64,3 +64,4 @@ Whenever implementing security-critical functionality, use the standardized proj
 - *Rule 2026-08-01*: Always use `resolve_safe_path` with an explicit base directory so that path traversal attempts (e.g., `../../etc/passwd`) raise a `ValueError`.
 - *Rule 2026-08-15*: For URL redirection, validate against the local server origin before issuing an HTTP 302 response.
 - *Rule 2026-08-20*: Output error messages must omit internal exception stack traces and return clean, standardized error JSON payloads.
+- *Rule 2026-10-09*: Pre-commit gate intercepts `git commit` via PreToolUse to block staged `.env`, `*.tfstate`, `*.pem`, `*.key` and plaintext API keys before reaching the repository history.

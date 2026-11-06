@@ -38,7 +38,7 @@ run_codemender_gate() {
   local REPORT_ERR_FILE
   REPORT_ERR_FILE=$(mktemp)
   local REPORT_RAW REPORT_EXIT
-  if REPORT_RAW=$(cm report --status OPEN --format json 2>"$REPORT_ERR_FILE"); then
+  if REPORT_RAW=$(cm report --format json 2>"$REPORT_ERR_FILE"); then
     REPORT_EXIT=0
   else
     REPORT_EXIT=$?
@@ -51,11 +51,20 @@ run_codemender_gate() {
   fi
   rm -f "$REPORT_ERR_FILE"
 
-  # Filter findings to modified files
+  # Filter findings to active statuses (OPEN/REOPENED) and modified files (support both snake_case v0.13.0 and PascalCase mocks; exact normalized path match)
   local SCAN_RESULT
   SCAN_RESULT=$(echo "$REPORT_RAW" | jq --arg files "$MODIFIED_FILES" '
-    ($files | split("\n")) as $mod_files |
-    [ .[] | select((.FilePath | gsub("\\\\"; "/")) as $fp | any($mod_files[]; . as $mf | $mf != "" and ($fp | endswith($mf)))) ]
+    ($files | split("\n") | map(select(. != "") | gsub("\\\\"; "/") | sub("^\\./"; ""))) as $mod_files |
+    [ .[] | select(
+      ((.status // .Status // "OPEN") | IN("OPEN", "REOPENED")) and (
+        ((.file_path // .FilePath // .path // "") | gsub("\\\\"; "/") | sub("^\\./"; "")) as $raw_fp |
+        any($mod_files[]; . as $mf |
+          $raw_fp == $mf or
+          ($raw_fp | endswith("/" + $mf)) or
+          ($mf | endswith("/" + $raw_fp))
+        )
+      )
+    ) ]
   ' 2>/dev/null || echo '[]')
 
   # 3. Ingest imported findings from Stage 1 if present
@@ -67,9 +76,9 @@ run_codemender_gate() {
     while IFS= read -r imp; do
       [ -z "$imp" ] && continue
       local IMP_ID IMP_FILE IMP_SEV
-      IMP_ID=$(echo "$imp" | jq -r '.check_id // .FindingID // "imported_issue"')
-      IMP_FILE=$(echo "$imp" | jq -r '.path // .FilePath // "unknown"')
-      IMP_SEV=$(echo "$imp" | jq -r '.extra.severity // .Severity // "HIGH"')
+      IMP_ID=$(echo "$imp" | jq -r '.finding_id // .check_id // .FindingID // "imported_issue"')
+      IMP_FILE=$(echo "$imp" | jq -r '.file_path // .path // .FilePath // "unknown"')
+      IMP_SEV=$(echo "$imp" | jq -r '.severity // .extra.severity // .Severity // "HIGH"')
       jq -n -c --arg id "$IMP_ID" --arg file "$IMP_FILE" --arg sev "$IMP_SEV" \
         '{FindingID:$id, FilePath:$file, Severity:$sev, Source:"stage1_imported"}' >> "$WORK_DIR/all.jsonl"
     done < "$SECURITY_GATE_PIPELINE_DIR/imported_findings.jsonl"
@@ -81,9 +90,9 @@ run_codemender_gate() {
   while IFS= read -r finding; do
     [ -z "$finding" ] && continue
     local SEV FILE FID
-    SEV=$(echo "$finding" | jq -r '.Severity // .severity // "UNKNOWN"')
-    FILE=$(echo "$finding" | jq -r '.FilePath // .path // ""')
-    FID=$(echo "$finding" | jq -r '.FindingID // .check_id // ""')
+    SEV=$(echo "$finding" | jq -r '.severity // .Severity // "UNKNOWN"')
+    FILE=$(echo "$finding" | jq -r '.file_path // .FilePath // .path // ""')
+    FID=$(echo "$finding" | jq -r '.finding_id // .FindingID // .check_id // ""')
 
     if is_blocking_severity "$SEV" && matches_threat_model "$FID" "$FILE" "$FID"; then
       echo "$finding" >> "$WORK_DIR/blocking.jsonl"
@@ -144,10 +153,10 @@ run_codemender_gate() {
   while IFS= read -r finding <&3; do
     [ -z "$finding" ] && continue
     local FINDING_ID FILE SEV DESC
-    FINDING_ID=$(echo "$finding" | jq -r '.FindingID // .check_id')
-    FILE=$(echo "$finding" | jq -r '.FilePath // .path')
-    SEV=$(echo "$finding" | jq -r '.Severity // .severity // "UNKNOWN"')
-    DESC=$(echo "$finding" | jq -r '.Description // .extra.message // "Security constraint violation"')
+    FINDING_ID=$(echo "$finding" | jq -r '.finding_id // .FindingID // .check_id // ""')
+    FILE=$(echo "$finding" | jq -r '.file_path // .FilePath // .path // ""')
+    SEV=$(echo "$finding" | jq -r '.severity // .Severity // "UNKNOWN"')
+    DESC=$(echo "$finding" | jq -r '.description // .Description // .title // .analysis // .extra.message // "Security constraint violation"')
 
     local PREV_ATTEMPTS
     PREV_ATTEMPTS=$(get_finding_attempt_count "$FINDING_ID" "$FILE")
@@ -165,14 +174,18 @@ run_codemender_gate() {
         VERIFY_EXIT=$?
       fi
 
-      # Exit code 1 indicates conclusively NOT exploitable / false positive in context
-      if [ "$VERIFY_EXIT" -eq 1 ]; then
-        echo "cm verify confirmed $FINDING_ID is not exploitable in this context. Recording as advisory." >&2
+      # Check if finding status transitioned to DISMISSED or verify conclusively proved not exploitable
+      local VERIFY_STATUS=""
+      VERIFY_STATUS=$(cm report --format json 2>/dev/null | jq -r --arg fid "$FINDING_ID" '.[] | select((.finding_id // .FindingID) == $fid) | (.status // .Status // "")' 2>/dev/null || echo "")
+
+      # Exit code 1 or status=='DISMISSED' indicates conclusively NOT exploitable / false positive in context
+      if [ "$VERIFY_EXIT" -eq 1 ] || [ "$VERIFY_STATUS" = "DISMISSED" ]; then
+        echo "cm verify confirmed $FINDING_ID is not exploitable in this context (status: ${VERIFY_STATUS:-DISMISSED}, exit: $VERIFY_EXIT). Recording as advisory." >&2
         log_event "ADVISORY" "codemender" "$(jq -n --arg fid "$FINDING_ID" --arg f "$FILE" '{finding_id:$fid, file:$f, note:"cm verify clarified non-exploitable after max attempts"}')"
         notify "ADVISORY" "Finding $FINDING_ID remained after $SECURITY_GATE_MAX_RETRIES failed fix attempts, but cm verify confirmed non-exploitable." "{}"
         continue
       else
-        echo "cm verify confirmed finding $FINDING_ID is exploitable or verify crashed (exit $VERIFY_EXIT)." >&2
+        echo "cm verify confirmed finding $FINDING_ID is exploitable or verify crashed (exit $VERIFY_EXIT, status: $VERIFY_STATUS)." >&2
         log_event "BLOCKED" "codemender" "$(jq -n --arg fid "$FINDING_ID" --arg f "$FILE" --argjson a "$CURRENT_ATTEMPT" '{finding_id:$fid, file:$f, attempt:$a, reason:"exploitable_after_max_attempts"}')"
         rm -rf "$WORK_DIR"
         deny "Finding $FINDING_ID ($SEV) in $FILE confirmed exploitable by verification after $SECURITY_GATE_MAX_RETRIES attempts. Escalating to human security review. See $SECURITY_GATE_LOG."

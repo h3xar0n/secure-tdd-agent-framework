@@ -2,11 +2,11 @@
   "security-gate": {
     "PreToolUse": [
       {
-        "matcher": "git push*",
+        "matcher": "run_command|.*:run_command|run_shell_command|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "./.agents/security_gate_hook.sh",
+            "command": "bash -c 'if [ -x ./security_gate_hook.sh ]; then exec ./security_gate_hook.sh; else exec ./.agents/security_gate_hook.sh; fi'",
             "timeout": 120
           }
         ]

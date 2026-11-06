@@ -14,10 +14,12 @@ def resolve_safe_path(base_dir: str, user_path: str) -> str:
     if not user_path or not isinstance(user_path, str):
         raise ValueError("Invalid filename or path")
     
-    # Strip dangerous characters and resolve canonical paths
-    clean_name = os.path.basename(user_path) if not user_path.startswith("/") else user_path
+    # Reject absolute paths explicitly
+    if os.path.isabs(user_path) or user_path.startswith("/") or user_path.startswith("\\"):
+        raise ValueError(f"Absolute paths not permitted: {user_path}")
+    
     canonical_base = os.path.realpath(base_dir)
-    target_path = os.path.realpath(os.path.join(canonical_base, user_path.lstrip("/")))
+    target_path = os.path.realpath(os.path.join(canonical_base, user_path))
     
     # Strict prefix check with directory separator to mitigate partial prefix match
     expected_prefix = canonical_base if canonical_base.endswith(os.sep) else canonical_base + os.sep

@@ -1,6 +1,6 @@
 ---
 name: skill-evolution-updater
-description: Extracts systemic conventions from resolved bugs, patterns, and refactors to update CONTEXT.md and agent skills for continuous evolution.
+description: Extracts systemic conventions from resolved bugs, patterns, and refactors to update CONTEXT.md and agent skills for continuous evolution. Use when capturing durable coding rules, architectural conventions, or recurring fix patterns into CONTEXT.md after a task or bug fix, updating skill instructions to prevent recurrence of errors, and logging gate findings to findings-log.ndjson. Do not use for writing feature code, authoring unit tests, or running pre-push scanner pipelines.
 ---
 
 # Skill & Conventions Evolution Updater (Continuous Evolution)

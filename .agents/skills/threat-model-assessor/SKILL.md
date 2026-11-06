@@ -1,6 +1,6 @@
 ---
 name: threat-model-assessor
-description: Plans feature architecture, functional requirements, and evaluates STRIDE security boundaries in Phase A Plan.
+description: Plans feature architecture, functional requirements, and evaluates STRIDE security boundaries in Phase A Plan. Use when scoping new features or bug fixes, defining user stories and acceptance criteria, identifying trust boundaries, and generating or updating threat_model.md. Do not use for writing test assertions, implementing production code, or running local scanners.
 ---
 
 # Planning, Requirements & Threat Model Assessor Skill (Phase A: Plan Phase)

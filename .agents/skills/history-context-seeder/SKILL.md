@@ -1,6 +1,6 @@
 ---
 name: history-context-seeder
-description: Analyzes repository Git history for past bug fixes, architectural conventions, and security patterns to seed CONTEXT.md on onboarding.
+description: Analyzes repository Git history for past bug fixes, architectural conventions, and security patterns to seed CONTEXT.md on onboarding. Use when first adopting the framework in an existing repository, mining historical commits and bug fixes for recurring risk areas, or populating the initial CONTEXT.md baseline with established conventions and helpers. Do not use for routine feature development, authoring test suites, or running the inner TDD loop on active tasks.
 ---
 
 # History & Architectural Context Seeder Skill (Repository Onboarding)

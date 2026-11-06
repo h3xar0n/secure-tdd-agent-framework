@@ -1,6 +1,6 @@
 ---
 name: security-test-writer
-description: Authors test-first unit and integration tests covering functional behavior, edge cases, and security boundaries in Phase B RED.
+description: Authors test-first unit and integration tests covering functional behavior, edge cases, and security boundaries in Phase B RED. Use when creating failing automated tests before writing production code, asserting HTTP status codes and contract responses, establishing boundary limits, or asserting that exploit payloads are rejected cleanly. Do not use for threat modeling during initial planning, writing production feature code, or running refactor sweeps.
 ---
 
 # QA & Security Test Writer Skill (Phase B: RED Phase)
